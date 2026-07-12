@@ -1000,9 +1000,12 @@ function newRx(keepPatient){
 let curAtt=[];
 let _attDB;
 function attDB(){return new Promise((res,rej)=>{if(_attDB)return res(_attDB);if(!window.indexedDB)return rej('noidb');const r=indexedDB.open('rx_att',2);r.onupgradeneeded=()=>{const db=r.result;if(!db.objectStoreNames.contains('files'))db.createObjectStore('files',{keyPath:'id'});if(!db.objectStoreNames.contains('approach'))db.createObjectStore('approach',{keyPath:'id'});};r.onsuccess=()=>{_attDB=r.result;res(_attDB);};r.onerror=()=>rej(r.error);});}
-function idbPut(id,files){return attDB().then(db=>new Promise((res,rej)=>{const tx=db.transaction('files','readwrite');tx.objectStore('files').put({id,files});tx.oncomplete=res;tx.onerror=()=>rej(tx.error);}));}
-function idbGet(id){return attDB().then(db=>new Promise(res=>{const tx=db.transaction('files','readonly');const rq=tx.objectStore('files').get(id);rq.onsuccess=()=>res(rq.result?rq.result.files:[]);rq.onerror=()=>res([]);})).catch(()=>[]);}
-function idbDel(id){return attDB().then(db=>new Promise(res=>{const tx=db.transaction('files','readwrite');tx.objectStore('files').delete(id);tx.oncomplete=res;tx.onerror=res;})).catch(()=>{});}
+function imgCompress(dataURL,type){return new Promise(res=>{if(!/^image\//.test(type||'')){res(dataURL);return;}try{const img=new Image();img.onload=function(){let w=img.width,h=img.height;const M=1200;if(w>M||h>M){const sc=Math.min(M/w,M/h);w=Math.round(w*sc);h=Math.round(h*sc);}const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);try{res(c.toDataURL('image/jpeg',0.6));}catch(e){res(dataURL);}};img.onerror=function(){res(dataURL);};img.src=dataURL;}catch(e){res(dataURL);}});}
+function compressFiles(files){return Promise.all((files||[]).map(a=>imgCompress(a.data,a.type).then(d=>({name:a.name,type:/^image\//.test(a.type||'')?'image/jpeg':(a.type||''),data:d}))));}
+function idbPutLocal(id,files){return attDB().then(db=>new Promise((res,rej)=>{const tx=db.transaction('files','readwrite');tx.objectStore('files').put({id,files});tx.oncomplete=res;tx.onerror=()=>rej(tx.error);}));}
+function idbPut(id,files){const p=idbPutLocal(id,files);if(CLOUD&&_db){compressFiles(files).then(cf=>{if(JSON.stringify(cf).length<1000000)_db.collection('att').doc(id).set({files:cf,ts:Date.now()}).catch(()=>{});}).catch(()=>{});}return p;}
+function idbGet(id){return attDB().then(db=>new Promise(res=>{const tx=db.transaction('files','readonly');const rq=tx.objectStore('files').get(id);rq.onsuccess=()=>res(rq.result?rq.result.files:[]);rq.onerror=()=>res([]);})).catch(()=>[]).then(local=>{if(local&&local.length)return local;if(CLOUD&&_db){return _db.collection('att').doc(id).get().then(sn=>{if(sn&&sn.exists){const f=((sn.data()||{}).files)||[];if(f.length)idbPutLocal(id,f).catch(()=>{});return f;}return local||[];}).catch(()=>local||[]);}return local||[];});}
+function idbDel(id){if(CLOUD&&_db){_db.collection('att').doc(id).delete().catch(()=>{});}return attDB().then(db=>new Promise(res=>{const tx=db.transaction('files','readwrite');tx.objectStore('files').delete(id);tx.oncomplete=res;tx.onerror=res;})).catch(()=>{});}
 function onAttPick(inp){[...inp.files].forEach(f=>{const r=new FileReader();r.onload=()=>{curAtt.push({name:f.name,type:f.type||'',data:r.result});renderAtt();};r.readAsDataURL(f);});inp.value='';}
 function renderAtt(){const box=$('attList');if(!box)return;box.innerHTML=curAtt.map((a,i)=>{const isImg=(a.type||'').startsWith('image/');const thumb=isImg?`<img src="${a.data}" class="att-thumb">`:`<div class="att-thumb">📄 PDF</div>`;return `<div class="att-item"><a href="#" onclick="openAtt(${i});return false;" title="Xem">${thumb}</a><div class="att-name" title="${esc(a.name)}">${esc(a.name)}</div><button class="att-del" onclick="delAtt(${i})" title="Xóa">×</button></div>`;}).join('');}
 function openAtt(i){const a=curAtt[i];if(!a)return;try{const arr=a.data.split(',');const mime=(arr[0].match(/:(.*?);/)||[])[1]||a.type||'application/octet-stream';const bin=atob(arr[1]);const u8=new Uint8Array(bin.length);for(let j=0;j<bin.length;j++)u8[j]=bin.charCodeAt(j);const url=URL.createObjectURL(new Blob([u8],{type:mime}));window.open(url,'_blank');}catch(e){const w=window.open();if(w)w.location=a.data;}}
@@ -1064,9 +1067,10 @@ const LS_APTOP='rx_ap_topics_v1';
 let _apList=[],_apTopics=[],_apView=null;
 function loadApTopics(){_apTopics=jget(LS_APTOP,[]);}
 function saveApTopics(){jset(LS_APTOP,_apTopics);cloudPushDebounced("approachTopics");}
-function apPut(rec){return attDB().then(db=>new Promise((res,rej)=>{const tx=db.transaction('approach','readwrite');tx.objectStore('approach').put(rec);tx.oncomplete=res;tx.onerror=()=>rej(tx.error);}));}
-function apAll(){return attDB().then(db=>new Promise(r2=>{const tx=db.transaction('approach','readonly');const rq=tx.objectStore('approach').getAll();rq.onsuccess=()=>r2(rq.result||[]);rq.onerror=()=>r2([]);})).catch(()=>[]);}
-function apDelDb(id){return attDB().then(db=>new Promise(r2=>{const tx=db.transaction('approach','readwrite');tx.objectStore('approach').delete(id);tx.oncomplete=r2;tx.onerror=r2;})).catch(()=>{});}
+function apPutLocal(rec){return attDB().then(db=>new Promise((res,rej)=>{const tx=db.transaction('approach','readwrite');tx.objectStore('approach').put(rec);tx.oncomplete=res;tx.onerror=()=>rej(tx.error);}));}
+function apPut(rec){const p=apPutLocal(rec);if(CLOUD&&_db){imgCompress(rec.data,rec.type).then(d=>{const c={id:rec.id,topicId:rec.topicId||'',title:rec.title||'',type:/^image\//.test(rec.type||'')?'image/jpeg':(rec.type||''),data:d};if(JSON.stringify(c).length<1000000)_db.collection('apimg').doc(rec.id).set(c).catch(()=>{});}).catch(()=>{});}return p;}
+function apAll(){return attDB().then(db=>new Promise(r2=>{const tx=db.transaction('approach','readonly');const rq=tx.objectStore('approach').getAll();rq.onsuccess=()=>r2(rq.result||[]);rq.onerror=()=>r2([]);})).catch(()=>[]).then(local=>{if(!(CLOUD&&_db))return local;return _db.collection('apimg').get().then(snap=>{const map=new Map();(local||[]).forEach(x=>map.set(x.id,x));snap.forEach(d=>{const v=d.data();if(v&&v.id){map.set(v.id,v);apPutLocal(v).catch(()=>{});}});return [...map.values()];}).catch(()=>local);});}
+function apDelDb(id){if(CLOUD&&_db){_db.collection('apimg').doc(id).delete().catch(()=>{});}return attDB().then(db=>new Promise(r2=>{const tx=db.transaction('approach','readwrite');tx.objectStore('approach').delete(id);tx.oncomplete=r2;tx.onerror=r2;})).catch(()=>{});}
 function openApproach(){show('approachOverlay');loadApTopics();apAll().then(l=>{_apList=l;_apView=null;apRenderTopics('');});}
 function apTopicCard(id,name,n,uncat){return `<div class="ap-topic" onclick="apOpenTopic('${id}')"><button class="att-del" onclick="event.stopPropagation();apDelTopic('${id}')" title="Xóa mục" ${uncat?'style="display:none"':''}>×</button><button class="ap-edit" onclick="event.stopPropagation();apRenameTopic('${id}')" title="Đổi tên mục" ${uncat?'style="display:none"':''}>✏️</button><div class="ap-topic-ic">📁</div><div class="ap-topic-nm">${esc(name)}</div><div class="ap-topic-ct">${n} hình</div></div>`;}
 function apTopicsHTML(q){q=(q||'').toLowerCase().trim();const counts={};_apList.forEach(a=>{const k=a.topicId||'';counts[k]=(counts[k]||0)+1;});let cards=_apTopics.filter(t=>!q||(t.name||'').toLowerCase().includes(q)).map(t=>apTopicCard(t.id,t.name,counts[t.id]||0));if((counts['']||0)>0&&(!q||'chưa phân loại'.includes(q)))cards.push(apTopicCard('','Chưa phân loại',counts[''],true));return cards.join('')||'<p style="color:#7a8aa0">Không tìm thấy mục nào.</p>';}
@@ -1469,11 +1473,17 @@ function startSync(){
   });
   toast('☁️ Đã kết nối dữ liệu đám mây');
 }
+function ckey(name,x){if(name==='drugs')return((x.name||'')+'|'+(x.ham||'')).toLowerCase();return x&&x.id?x.id:JSON.stringify(x);}
 function applyCloud(key,list){
   const info=CLOUD_KEYS[key];if(!info)return;
+  const arr=info.arr();
+  const map=new Map();
+  for(const x of arr)map.set(ckey(key,x),x);
+  for(const x of list)map.set(ckey(key,x),x);
+  const merged=[...map.values()];
   _applying=true;
-  const arr=info.arr();arr.length=0;for(let i=0;i<list.length;i++)arr.push(list[i]);
-  jset(info.ls,list);
+  arr.length=0;for(let i=0;i<merged.length;i++)arr.push(merged[i]);
+  jset(info.ls,merged);
   _applying=false;
   try{
     if(key==='drugs'&&typeof buildIndex==='function')buildIndex();

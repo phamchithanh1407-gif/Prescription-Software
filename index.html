@@ -2,8 +2,13 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Phần mềm kê toa thuốc</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Toa thuốc">
+<link rel="apple-touch-icon" href="data:image/png;base64,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">
 <style>
   :root{
     --blue:#1565c0; --blue-dark:#0d47a1; --bg:#eef2f7; --line:#cfd8e3;
@@ -200,6 +205,24 @@
   .login-err{color:#c62828;font-size:13px;margin-top:8px;min-height:16px;}
   .login-state{color:#7a8aa0;font-size:12px;margin-top:8px;}
   #cloudBtn{display:none;}
+  .rx-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  @media (max-width:820px){
+    .wrap{padding:0 8px;margin:10px auto;}
+    .card{padding:12px 12px;}
+    .topbar{padding:8px 10px;gap:6px;flex-wrap:wrap;}
+    .topbar h1{font-size:15px;flex:1 1 100%;margin-bottom:4px;}
+    .topbar button,.topbar .tbtn{font-size:12px;padding:6px 9px;}
+    h2.title{font-size:19px;margin:4px 0 12px;letter-spacing:1px;}
+    .field{gap:4px 8px;margin-bottom:8px;}
+    .field label{min-width:auto;font-size:15px;}
+    .field input.grow{flex:1 1 100%;min-width:0;}
+    #rxTable{min-width:940px;}
+    textarea.note{font-size:15px;}
+    .modal{padding:14px;max-height:88vh;overflow:auto;}
+    .modal.wide{max-width:100%;}
+    .att-item{width:88px;} .att-thumb{width:74px;height:74px;}
+    .ap-topic{width:calc(50% - 6px);}
+  }
 </style>
 </head>
 <body>
@@ -270,7 +293,7 @@
       </div>
     </div>
 
-    <table id="rxTable">
+    <div class="rx-scroll"><table id="rxTable">
       <thead>
         <tr>
           <th style="width:30px;">#</th>
@@ -286,7 +309,7 @@
         </tr>
       </thead>
       <tbody id="rxBody"></tbody>
-    </table>
+    </table></div>
     <button class="add-row" onclick="addRow()">+ Thêm thuốc</button>
 
     <div class="total-line">

@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phần mềm kê toa thuốc</title>
+<style>
+  :root{
+    --blue:#1565c0; --blue-dark:#0d47a1; --bg:#eef2f7; --line:#cfd8e3;
+    --green:#2e7d32; --red:#c62828; --amber:#f9a825; --txt:#1a2433;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Segoe UI",-apple-system,"Helvetica Neue",Arial,sans-serif;
+    background:var(--bg);color:var(--txt);font-size:16px;}
+  .topbar{background:var(--blue-dark);color:#fff;padding:10px 18px;display:flex;
+    align-items:center;gap:10px;flex-wrap:wrap;position:sticky;top:0;z-index:50;}
+  .topbar h1{font-size:17px;margin:0;font-weight:600;flex:1;}
+  .topbar button{background:#fff;color:var(--blue-dark);border:none;padding:8px 13px;
+    border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;}
+  .topbar button:hover{background:#e3f2fd;}
+  .topbar button.ghost{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.6);}
+  .topbar .tbtn{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.6);padding:8px 13px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;display:inline-block;}
+  .wrap{max-width:none;width:100%;margin:18px auto;padding:0 28px;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:20px 22px;
+    box-shadow:0 1px 4px rgba(0,0,0,.05);}
+  .pt-banner{background:#e3f2fd;border:1px solid #90caf9;border-radius:8px;padding:8px 14px;
+    margin-bottom:14px;display:none;align-items:center;gap:12px;font-size:13px;}
+  .pt-banner.show{display:flex;}
+  .pt-banner b{color:var(--blue-dark);}
+  .pt-banner button{margin-left:auto;background:var(--blue);color:#fff;border:none;border-radius:5px;
+    padding:5px 10px;cursor:pointer;font-size:12px;font-weight:600;}
+  .clinic{text-align:center;border-bottom:2px solid var(--blue);padding-bottom:8px;margin-bottom:14px;}
+  .clinic .name{font-size:16px;font-weight:700;color:var(--blue-dark);}
+  .clinic .sub{font-size:12px;color:#5a6b80;}
+  h2.title{text-align:center;font-size:22px;letter-spacing:2px;margin:6px 0 18px;color:var(--blue-dark);}
+  .field{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+  .field label{font-weight:600;min-width:100px;font-size:16px;}
+  .field input,.field select{border:1px solid var(--line);border-radius:6px;padding:9px 11px;
+    font-size:16px;font-family:inherit;}
+  .field input.grow{flex:1;min-width:160px;}
+  table{width:100%;border-collapse:collapse;margin-top:6px;}
+  #rxTable{table-layout:fixed;}
+  th,td{border:1px solid var(--line);padding:6px 7px;text-align:left;vertical-align:top;}
+  #rxTable th{white-space:normal;text-align:center;vertical-align:middle;font-size:12.5px;letter-spacing:0;padding:6px 4px;line-height:1.2;position:relative;}
+  .col-resizer{position:absolute;top:0;right:-4px;width:9px;height:100%;cursor:col-resize;z-index:6;}
+  .col-resizer:hover{background:#90caf9;opacity:.6;}
+  #rxTable td{vertical-align:top;}
+  #rxTable td.idx{cursor:grab;user-select:none;color:#5a6b80;}
+  #rxTable tr.dragging{opacity:.45;}
+  #rxTable td .dname{white-space:normal;font-size:13px;font-weight:600;padding:8px;width:100%;resize:none;overflow:hidden;line-height:1.25;box-sizing:border-box;display:block;font-family:inherit;}
+  #rxTable td .unit{font-size:13px;padding:6px 2px;}
+  .dinfo{display:none;}
+  .att-add{display:inline-block;background:var(--green);color:#fff;border:none;padding:8px 14px;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px;}
+  .att-add:hover{filter:brightness(.95);}
+  .att-list{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;}
+  .att-item{width:104px;border:1px solid var(--line);border-radius:8px;padding:6px;position:relative;background:#fff;}
+  .att-item a{display:block;}
+  .att-thumb{width:90px;height:90px;object-fit:cover;border-radius:5px;display:flex;align-items:center;justify-content:center;background:#f1f6fc;color:#1565c0;font-weight:700;font-size:13px;}
+  .att-name{font-size:11px;color:#5a6b80;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .att-del{position:absolute;top:-8px;right:-8px;background:var(--red);color:#fff;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:13px;line-height:1;}
+  .dn-note{margin-top:5px;}
+  .note-btn{background:none;border:none;color:#1565c0;font-size:11px;cursor:pointer;padding:2px 0;}
+  .note-btn:hover{text-decoration:underline;}
+  .drugnote{width:100%;font-size:13px;padding:7px;border:1px solid #dde5ef;border-radius:5px;margin-top:3px;font-family:inherit;}
+  .ap-edit{position:absolute;top:-8px;left:-8px;background:#1565c0;color:#fff;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:11px;line-height:1;padding:0;}
+  .st-kpis{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0;}
+  .st-kpi{flex:1;min-width:150px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#f8fafc;}
+  .st-kpi .v{font-size:24px;font-weight:800;color:#0d47a1;line-height:1.1;}
+  .st-kpi .l{font-size:12px;color:#5a6b80;margin-top:3px;}
+  .st-kpi .d{font-size:11px;margin-top:2px;}
+  .st-up{color:#2e7d32;} .st-down{color:#c62828;}
+  .st-sec{margin-top:18px;} .st-sec h4{margin:0 0 6px;font-size:15px;color:#123;}
+  .st-nav{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .st-nav button{border:1px solid var(--line);background:#fff;border-radius:6px;padding:5px 11px;cursor:pointer;font-size:15px;}
+  .st-nav .mlabel{font-size:17px;font-weight:700;min-width:120px;text-align:center;}
+  .st-grid2{display:flex;flex-wrap:wrap;gap:18px;}
+  .st-grid2>div{flex:1;min-width:300px;}
+  .st-bar{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:13px;}
+  .st-bar .nm{width:120px;flex:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .st-bar .track{flex:1;background:#eef2f7;border-radius:4px;height:16px;overflow:hidden;}
+  .st-bar .fill{height:100%;background:#1976d2;}
+  .st-bar .n{width:74px;flex:none;text-align:right;color:#333;}
+  .st-legend{font-size:12px;color:#5a6b80;margin:4px 0 0;}
+  .st-legend i{display:inline-block;width:11px;height:11px;border-radius:2px;margin:0 3px 0 10px;vertical-align:middle;}
+  .ap-grid{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;}
+  .ap-topic{position:relative;width:150px;height:96px;border:1px solid var(--line);border-radius:10px;background:#f7f9fc;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;}
+  .ap-topic:hover{background:#e3f2fd;}
+  .ap-topic-ic{font-size:26px;line-height:1;}
+  .ap-topic-nm{font-weight:600;text-align:center;padding:0 8px;font-size:14px;}
+  .ap-topic-ct{font-size:12px;color:#7a8aa0;}
+  .sug{position:absolute;left:0;right:0;top:100%;z-index:40;background:#fff;border:1px solid var(--line);border-top:none;max-height:260px;overflow:auto;display:none;box-shadow:0 6px 14px rgba(0,0,0,.15);text-align:left;}
+  .sug-item{padding:7px 9px;font-size:13px;cursor:pointer;border-bottom:1px solid #f0f3f7;white-space:normal;}
+  .sug-item:hover{background:#e3f2fd;}
+  .sug-sub{display:block;font-size:11px;color:#5a6b80;margin-top:2px;}
+  th{background:#f1f6fc;font-size:14px;color:var(--blue-dark);text-transform:uppercase;letter-spacing:.5px;}
+  td input,td select{width:100%;border:1px solid #dde5ef;border-radius:5px;padding:7px;font-size:13px;font-family:inherit;}
+  td input.auto{background:#eef2f7;color:#37474f;font-weight:600;cursor:not-allowed;border-style:dashed;}
+  .dose-grid{display:grid;grid-template-columns:repeat(4,1fr) 1.5fr;gap:4px;}
+  .dose-grid input{text-align:center;}
+  .dose-grid input.dunit{text-align:left;}
+  .num{text-align:right;font-variant-numeric:tabular-nums;}
+  .amount{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;}
+  .del-btn{background:var(--red);color:#fff;border:none;border-radius:5px;width:26px;height:26px;
+    cursor:pointer;font-size:15px;line-height:1;}
+  .add-row{margin-top:10px;background:var(--green);color:#fff;border:none;padding:9px 16px;
+    border-radius:6px;font-weight:600;cursor:pointer;}
+  .total-line{display:flex;justify-content:flex-end;gap:16px;align-items:baseline;margin-top:14px;
+    font-size:18px;font-weight:700;color:var(--blue-dark);}
+  .followup-box{display:flex;align-items:center;gap:8px;margin-top:14px;background:#fff8e1;
+    border:1px solid #ffe082;border-radius:8px;padding:8px 12px;}
+  .followup-box label{font-weight:600;}
+  .followup-box input{border:1px solid var(--line);border-radius:6px;padding:6px 9px;font-family:inherit;}
+  .footer-sign{display:flex;justify-content:space-between;margin-top:26px;}
+  .footer-sign .date{font-style:italic;color:#5a6b80;}
+  .footer-sign .doc{text-align:center;}
+  .footer-sign .doc .role{font-weight:700;}
+  .footer-sign .doc .space{height:60px;}
+  .footer-sign .doc input{border:none;border-bottom:1px dotted #99a;text-align:center;font-size:14px;font-weight:600;}
+  textarea.note{width:100%;border:1px solid var(--line);border-radius:6px;padding:9px;font-family:inherit;font-size:16px;line-height:1.6;resize:vertical;min-height:70px;}
+
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;
+    justify-content:center;z-index:100;padding:30px 14px;overflow:auto;}
+  .overlay.show{display:flex;}
+  .modal{background:#fff;border-radius:10px;max-width:760px;width:100%;padding:20px 22px;}
+  .modal.wide{max-width:1280px;}
+  #drugMgrTable td input{width:100%;border:1px solid #dde5ef;border-radius:5px;padding:6px;font-size:13px;font-family:inherit;}
+  .modal h3{margin:0 0 14px;color:var(--blue-dark);}
+  .modal .close{float:right;background:none;border:none;font-size:22px;cursor:pointer;color:#888;}
+  .search-in{width:100%;padding:9px;border:1px solid var(--line);border-radius:6px;margin-bottom:12px;font-size:14px;}
+  .drug-add-row{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+  .drug-add-row input{border:1px solid var(--line);border-radius:6px;padding:8px;font-size:13px;}
+  .drug-add-row input.nm{flex:1;min-width:200px;}
+  .drug-add-row button{background:var(--green);color:#fff;border:none;border-radius:6px;padding:8px 14px;font-weight:600;cursor:pointer;}
+  .mini-del{background:var(--red);color:#fff;border:none;border-radius:4px;width:24px;height:24px;cursor:pointer;}
+
+  .badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;}
+  .badge.over{background:#ffebee;color:var(--red);}
+  .badge.today{background:#fff8e1;color:#b26a00;}
+  .badge.soon{background:#e3f2fd;color:var(--blue-dark);}
+  .badge.future{background:#eceff1;color:#546e7a;}
+  .badge.none{background:#f5f5f5;color:#9e9e9e;}
+
+  .pt-row{cursor:pointer;}
+  .pt-row:hover{background:#f1f6fc;}
+  .alert-recall{background:#fff3e0;border:1px solid #ffcc80;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;}
+  .alert-recall b{color:#b26a00;}
+  .btn-sm{border:none;border-radius:5px;padding:6px 11px;cursor:pointer;font-weight:600;font-size:12px;}
+  .btn-open{background:var(--blue);color:#fff;}
+  .btn-copy{background:var(--amber);color:#5a3e00;}
+  .btn-new{background:var(--green);color:#fff;}
+  .btn-del{background:var(--red);color:#fff;}
+  .btn-back{background:#eceff1;color:#37474f;}
+  .rx-hist{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:8px;}
+  .rx-hist .head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+  .rx-hist .meta{font-size:12px;color:#5a6b80;}
+  .rx-hist .drugs{font-size:12px;color:#37474f;margin-top:5px;}
+  .pt-info-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px 16px;margin-bottom:14px;font-size:13px;}
+  .pt-info-grid div{padding:4px 0;border-bottom:1px dashed #e0e6ee;}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--blue-dark);
+    color:#fff;padding:10px 20px;border-radius:8px;opacity:0;transition:.3s;z-index:200;}
+  .toast.show{opacity:1;}
+
+  /* ===== Bản in (kiểu giống PDF, không khung bảng) ===== */
+  #printView{display:none;}
+  @media print{
+    @page{size:A4;margin:18mm 16mm;}
+    .topbar,.wrap,.overlay,.toast{display:none!important;}
+    html,body{background:#fff!important;}
+    #printView,#printView *{background:transparent!important;background-color:transparent!important;}
+    #printView{display:block!important;font-family:"Times New Roman",Times,serif;color:#000;font-size:15px;line-height:1.55;}
+    #printView b{font-weight:bold;color:#000;}
+    .pv-clinic{text-align:center;margin-bottom:4px;}
+    .pv-cname{font-size:15px;font-weight:bold;text-transform:uppercase;}
+    .pv-csub{font-size:13px;}
+    .pv-title{text-align:center;font-size:24px;font-weight:bold;letter-spacing:3px;margin:12px 0 18px;}
+    .pv-id{display:flex;justify-content:space-between;gap:20px;margin-bottom:7px;}
+    .pv-l{margin-bottom:7px;}
+    .pv-drug{margin:11px 0;}
+    .pv-dh{display:flex;align-items:baseline;}
+    .pv-no{width:24px;flex:none;}
+    .pv-dn{flex:1;padding-right:14px;}
+    .pv-dq{white-space:nowrap;}
+    .pv-dd{margin:3px 0 0 24px;}
+    .pv-rt{font-style:italic;}
+    .pv-dnote{margin:2px 0 0 24px;font-style:italic;font-size:15px;}
+    .pv-bottom{margin-top:26px;display:flex;justify-content:space-between;align-items:flex-start;gap:24px;}
+    .pv-note{flex:1;}
+    .pv-sign{text-align:center;flex:none;min-width:210px;}
+    .pv-date{font-style:italic;margin-bottom:6px;}
+    .pv-role{font-weight:bold;}
+    .pv-space{height:62px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>💊 Phần mềm kê toa thuốc</h1>
+  <button onclick="newRx()" class="ghost">🆕 Đơn mới</button>
+  <button onclick="saveRx()">💾 Lưu đơn</button>
+  <button onclick="openPatients()">👥 Bệnh nhân</button>
+  <button onclick="openProto()" class="ghost">🧩 Phác đồ</button>
+  <button onclick="openApproach()" class="ghost">📚 Sơ đồ phác đồ</button>
+  <button onclick="openDrugMgr()" class="ghost">📋 Danh mục thuốc</button>
+  <button onclick="openStats()" class="ghost">📊 Thống kê</button>
+  <button onclick="doPrint()">🖨️ In / PDF</button>
+  <button onclick="exportData()" class="ghost">⬇️ Sao lưu</button>
+  <label for="impInput" class="tbtn">⬆️ Nhập</label>
+  <input type="file" id="impInput" accept="application/json,.json" style="display:none" onchange="importData(this)">
+</div>
+
+<div class="wrap">
+  <div class="card" id="rxCard">
+    <div class="pt-banner" id="ptBanner">
+      <span>📁 Hồ sơ: <b id="bannerName"></b> <span id="bannerMeta"></span></span>
+      <button onclick="openPatientDetail(currentPatientId)">Xem hồ sơ</button>
+    </div>
+
+    <h2 class="title">ĐƠN THUỐC</h2>
+
+    <div class="field">
+      <label>Họ và tên:</label>
+      <input class="grow" id="ptName" placeholder="Nguyễn Văn A" style="text-transform:uppercase;">
+      <label style="min-width:auto;">Năm sinh:</label>
+      <input id="ptYear" style="width:80px;" placeholder="1980">
+      <label style="min-width:auto;">Giới tính:</label>
+      <select id="ptSex" style="width:80px;"><option>Nam</option><option>Nữ</option></select>
+    </div>
+    <div class="field">
+      <label>Địa chỉ:</label>
+      <input class="grow" id="ptAddr" placeholder="Địa chỉ bệnh nhân">
+      <label style="min-width:auto;">SĐT:</label>
+      <input id="ptPhone" style="width:130px;" placeholder="Điện thoại">
+    </div>
+    <div class="field">
+      <label>Chẩn đoán:</label>
+      <input class="grow" id="ptDx" placeholder="Chẩn đoán">
+    </div>
+    <div class="field" style="align-items:flex-start;">
+      <label>Cận lâm sàng:</label>
+      <div style="flex:1;">
+        <label for="attInput" class="att-add">📎 Tải kết quả xét nghiệm</label>
+        <input type="file" id="attInput" accept="image/*,application/pdf" multiple style="display:none" onchange="onAttPick(this)">
+        <div id="attList" class="att-list"></div>
+      </div>
+    </div>
+
+    <table id="rxTable">
+      <thead>
+        <tr>
+          <th style="width:30px;">#</th>
+          <th style="width:380px;">Tên thuốc</th>
+          <th style="width:190px;">Liều thuốc</th>
+          <th style="width:96px;">Đường dùng</th>
+          <th style="width:58px;">Số ngày</th>
+          <th style="width:60px;">SL</th>
+          <th style="width:54px;">Đơn vị</th>
+          <th style="width:72px;" class="money">Đơn giá</th>
+          <th style="width:85px;" class="money">Thành tiền</th>
+          <th style="width:34px;" class="no-print"></th>
+        </tr>
+      </thead>
+      <tbody id="rxBody"></tbody>
+    </table>
+    <button class="add-row" onclick="addRow()">+ Thêm thuốc</button>
+
+    <div class="total-line">
+      <span>Tổng cộng:</span>
+      <span id="grandTotal">0 đ</span>
+    </div>
+
+    <div class="followup-box">
+      <label>📅 Hẹn tái khám:</label>
+      <input type="date" id="rxFollow">
+      <span style="font-size:12px;color:#8a6d3b;">(để trống nếu không hẹn)</span>
+    </div>
+
+    <div class="field" style="margin-top:14px;align-items:flex-start;">
+      <label>Ghi chú:</label>
+      <textarea class="note" id="rxNote" rows="3" placeholder="Lời dặn của bác sĩ... (mỗi dòng 1 ý)"></textarea>
+    </div>
+
+    <div class="footer-sign">
+      <div class="date">Ngày <span id="dDay"></span> tháng <span id="dMonth"></span> năm <span id="dYear"></span></div>
+      <div class="doc">
+        <div class="role">Bác sĩ khám bệnh</div>
+        <div class="space"></div>
+        <input id="docName" placeholder="(Ký, ghi rõ họ tên)">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Bệnh nhân -->
+<div class="overlay" id="ptOverlay">
+  <div class="modal">
+    <button class="close" onclick="closeModal('ptOverlay')">&times;</button>
+    <div id="ptView"></div>
+  </div>
+</div>
+
+<!-- Modal: Thống kê phòng khám -->
+<div class="overlay" id="statsOverlay">
+  <div class="modal" style="max-width:1080px">
+    <button class="close" onclick="closeModal('statsOverlay')">&times;</button>
+    <div id="statsBody"></div>
+  </div>
+</div>
+
+<!-- Modal: Sơ đồ phác đồ (hình tra cứu) -->
+<div class="overlay" id="approachOverlay">
+  <div class="modal wide">
+    <button class="close" onclick="closeModal('approachOverlay')">&times;</button>
+    <div id="apBody"></div>
+  </div>
+</div>
+
+<!-- Modal: Phác đồ -->
+<div class="overlay" id="protoOverlay">
+  <div class="modal">
+    <button class="close" onclick="closeModal('protoOverlay')">&times;</button>
+    <h3>🧩 Phác đồ điều trị</h3>
+    <button class="att-add" style="margin-bottom:10px" onclick="saveProtoFromForm()">💾 Lưu toa hiện tại thành phác đồ</button>
+    <div style="font-size:12px;color:#5a6b80;margin-bottom:8px;">Gõ thuốc cho toa như bình thường rồi bấm nút trên để lưu thành mẫu. Bấm "Áp dụng" để nạp mẫu vào toa.</div>
+    <input id="protoSearch" class="search-in" placeholder="🔍 Tìm phác đồ theo tên hoặc thuốc..." oninput="renderProto(this.value)">
+    <div id="protoList"></div>
+  </div>
+</div>
+
+<!-- Modal: Danh mục thuốc -->
+<div class="overlay" id="drugOverlay">
+  <div class="modal wide">
+    <button class="close" onclick="closeModal('drugOverlay')">&times;</button>
+    <h3>📋 Danh mục thuốc <a href="https://dichvucong.dav.gov.vn/congbothuoc/index" target="_blank" style="font-size:13px;font-weight:400;">🔎 Tra cứu trên DAV ↗</a></h3>
+    <div class="drug-add-row">
+      <input class="nm" id="newDrugName" placeholder="Tên thuốc">
+      <input id="newDrugHC" placeholder="Hoạt chất" style="width:150px;">
+      <input id="newDrugHam" placeholder="Hàm lượng" style="width:90px;">
+      <input id="newDrugDbc" placeholder="Dạng bào chế" style="width:130px;">
+      <input id="newDrugCt" placeholder="Công ty" style="width:140px;">
+      <input id="newDrugPrice" type="number" placeholder="Đơn giá" style="width:100px;">
+      <button onclick="addDrug()">+ Thêm</button>
+    </div>
+    <input id="drugSearch" class="search-in" placeholder="🔍 Tìm thuốc..." oninput="renderDrugList()">
+    <div style="max-height:420px;overflow:auto;">
+      <table id="drugMgrTable">
+        <thead><tr>
+          <th style="min-width:170px;">Tên thuốc</th>
+          <th style="min-width:140px;">Hoạt chất</th>
+          <th style="width:130px;">Hàm lượng</th>
+          <th style="min-width:130px;">Dạng bào chế</th>
+          <th style="min-width:140px;">Công ty</th>
+          <th style="width:90px;">Đơn giá</th>
+          <th style="width:34px;"></th>
+        </tr></thead>
+        <tbody id="drugMgrBody"></tbody>
+      </table>
+    </div>
+    <p style="font-size:12px;color:#5a6b80;margin-top:8px;">Hoạt chất, hàm lượng, dạng bào chế đã điền sẵn theo DAV. Cột Công ty để trống — bấm "Tra cứu trên DAV" để xem hãng đăng ký chính xác rồi điền. Mọi ô đều sửa được.</p>
+  </div>
+</div>
+
+<div id="printView"></div>
+
+<datalist id="drugList"></datalist>
+
+<datalist id="doseUnitList">
+  <option value="viên"></option>
+  <option value="ml"></option>
+  <option value="nắp"></option>
+  <option value="nhát"></option>
+  <option value="bút tiêm"></option>
+  <option value="gói"></option>
+  <option value="giọt"></option>
+  <option value="ống"></option>
+  <option value="muỗng"></option>
+</datalist>
+
+<datalist id="routeList">
+  <option value="Uống"></option>
+  <option value="Ngậm"></option>
+  <option value="Xịt"></option>
+  <option value="Hít"></option>
+  <option value="Nhỏ mắt"></option>
+  <option value="Nhỏ mũi"></option>
+  <option value="Bôi ngoài da"></option>
+  <option value="Đặt"></option>
+  <option value="Tiêm"></option>
+  <option value="Tiêm tĩnh mạch"></option>
+  <option value="Tiêm bắp"></option>
+  <option value="Truyền tĩnh mạch"></option>
+</datalist>
+
+<div id="dupNotice" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(13,71,161,.96);color:#fff;align-items:center;justify-content:center;text-align:center;padding:24px;">
+  <div style="max-width:460px;">
+    <div style="font-size:40px;">⚠️</div>
+    <div style="font-size:18px;font-weight:600;margin:10px 0;">Phần mềm đang mở ở một tab khác</div>
+    <div style="font-size:14px;opacity:.9;margin-bottom:18px;">Hãy dùng tab đang mở để tránh trùng/sai dữ liệu. Sếp có thể đóng tab này.</div>
+    <button onclick="document.getElementById('dupNotice').style.display='none';" style="background:#fff;color:#0d47a1;border:none;padding:9px 18px;border-radius:6px;font-weight:600;cursor:pointer;">Vẫn dùng tab này</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===== Dữ liệu thuốc mặc định ===== */
+const DEFAULT_DRUGS = [
+  ["Paracetamol (Tylenol) 500 mg",2000],["Cefuroxim (VIDIPHA) 500 mg",3400],
+  ["Paracetamol (CHOAY) 500 mg",700],["Nasonex",200000],["Spiriva Respimat",960000],
+  ["Esomeprazole (STADA) 40 mg",3500],["Silum (Flunarizin) 5 mg",3000],
+  ["Pregabalin (Lyrica) 75 mg",18500],["Tramadol/Paracetamol (Ultracet) 37.5/325 mg",8100],
+  ["Meloxicam (Mobic) 7.5 mg",1000],["Atorvastatin (Atorhasan) 20 mg",4000],
+  ["Olanzapine (Olanxol) 10 mg",3000],["Silymarin (Legalon) 140 mg",8300],
+  ["Fexofenadine (Telfast) 180 mg",7900],["Ambroxol (Mucosolvan) 30 mg",3000],
+  ["Mometason furoat (Nasonex) 0.05%",200000],["Xisat 75 mL",30000],["Berocca",7500],
+  ["Vitamin 3B (Scanneuron)",1600],["Vitamin 3B (Neurobion)",3000],["Citicolin 500 mg",18000],
+  ["Ginkgo Biloba (Tanakan) 40 mg",4500],["Xatral XL (Alfuzosin) 10 mg",16000],
+  ["Spiolto Respimat",1000000],["Amoxicillin/Acid Clavulanic (Augmentin) 1 g",7000],
+  ["Desloratadin (Lorastad D) 5 mg",1200],["Methylprednisolon (Medrol) 16 mg",4000],
+  ["Azithromycin 500 mg",6000],["Roruvastatin (Crestor) 10 mg",18000],
+  ["Amlodipine + Losartan (Cozaaz XQ) 5/50 mg",12000],["Allopurinol (Zyloric) 300 mg",4500],
+  ["Amlodipine (Amlor) 5 mg",7600],["Savi-Losartan (Losartan) 50 mg",1700],
+  ["Atorvastatin (Lipitor) 20 mg",16000],["Clopidogrel (Clopistad) 75 mg",4400],
+  ["Diosmin + Hesperidin (Daflon) 500 mg",4000],["Diosmin + Hesperidin (DilodinDHG) 500 mg",720],
+  ["Pregabalin (Antivic) 75 mg",6500],["Aspirin 81 mg",300],["Furosemide (Agifuros) 40 mg",1000],
+  ["Kalium Chloratum 0.5 g",3500],["Lipalthyl (Fenofibrate) 300 mg",6500],
+  ["Nexium (Esomeprazole) 40 mg",32000],["Amoxicillin 500 mg",1200],
+  ["Flagyl (Metronidazole) 500 mg",5600],["Clarythromycin 500 mg",7000],
+  ["Metformine (Glucophage) XR 850 mg",0],["Tanganil 500 mg",0],["Betaserc 16 mg",0],
+  ["Piracetam 1200 mg",0],["Lyrica 75 mg",0],["Spiromide 20/50 mg",0],["Enat 400 mg",0],
+  ["Galvus Met 50/500 mg (Vildagliptin + Metformin)",10000],
+  ["Jardiance duo 12,5/1000 mg (Empagliflozin + Metformin)",16500],
+  ["Novomix 30 Flexpen 100IU/mL",250000],["Diamicron 60 mg (Gliclazide)",6000],
+  ["Aprovel 150 mg (Irbesartan)",5500],["Forxiga 10 mg (Dapagliflozin)",20000],
+  ["Exforge 5/160 mg (Amlodipine + Valsartan)",18500],["Concor 2.5 mg (Bisoprolol)",3500],
+  ["Lipistad (Atorvastatin) 10mg",1000],["Dalacin C 300mg",0],
+  ["Janumet 50/1000mg",0],["Eliquis 2,5mg",0],
+  ["X-Healer",0],["Special Kid Multivitamin",0],
+  ["Atorvastatin (Atorhasan) 10 mg",3000],["Piracetam 800 mg",0],["Acorxia 60 mg",0],
+  ["Myonal 50 mg",0],["Glucosamine 500 mg (Stella)",0],
+  ["Metformin (Glucophage XR) 1000 mg",0],["Saxenda (Liraglutide)",0],
+  ["Exforge hct 5/160/12.5 mg (Amlodipine + Valsartan + hydrochlorothiazid)",0],
+  ["Magne B6 (Corbiere)",0],["Neutriviit (Vitamin 3B)",0],
+  ["Fluoxetin 20 mg",0],["Singulair 10 mg",0],["Bilaxten 10 mg",0],["Zinnat 500 mg",0],
+  ["Savi Esomeprazole 40 mg",0],["Paroxetine 20 mg",0],
+  ["Pradaxa (Dabigatran) 110 mg",0],["Pradaxa (Dabigatran) 150 mg",0],
+  ["Xarelto (Rivaroxaban) 10 mg",0],["Xarelto (Rivaroxaban) 15 mg",0],
+  ["Xarelto (Rivaroxaban) 20 mg",0],["Betaloc Zok (Metoprolol) 25 mg",0],
+  ["Betaloc Zok (Metoprolol) 50 mg",0],["Concor (Bisoprolol) 5 mg",0],
+  ["Micardis (Telmisartan) 40 mg",0],["Ednyt (Enalapril) 5 mg",0],
+  ["Ednyt (Enalapril) 10 mg",0],["Imidu (Isosorbide Mononitrate) 60 mg",0],
+  ["Biresort (Isosorbide Dinitrate) 10 mg",0],["Nitrostad (Trinitrate) 2,5 mg",0],
+  ["Diovan (Valsartan) 80 mg",0],["Diovan (Valsartan) 160 mg",0],
+  ["Carvedilol 12,5 mg",0],["Nitromint (Trinitrate) 2,6 mg",0],
+  ["Vasostrate (Trinitrate) 30 mg",0],["Procoralan (Ivabradine) 5 mg",0],
+  ["Procoralan (Ivabradine) 7,5 mg",0],["Nebilet (Nebivolol) 5 mg",0],
+  ["Cordarone (Amiodarone) 150 mg/3 mL (ống)",0],["Cordarone (Amiodarone) 200 mg (viên)",0],
+  ["Domperidon 10 mg",0],["Primperan (Metoclopramide) 10 mg (ống)",0],
+  ["Levothyrox (Levothyroxine) 100 mcg",0],["PTU (Propylthiouracil) 50 mg",0],
+  ["Lacipil (Lacidipine) 4 mg",0]
+];
+const UNITS = ["Viên","Gói","Ống","Chai","Lọ","Tuýp","Vỉ","Hộp","Cái","Bút tiêm"];
+
+/* Thông tin thuốc (tra cứu & chuẩn hoá theo dichvucong.dav.gov.vn): [hoạt chất, hàm lượng, dạng bào chế, công ty] */
+const DRUG_INFO = {
+  "Paracetamol (Tylenol) 500 mg":["Paracetamol","500 mg","Viên nén",""],
+  "Cefuroxim (VIDIPHA) 500 mg":["Cefuroxim","500 mg","Viên nén bao phim",""],
+  "Paracetamol (CHOAY) 500 mg":["Paracetamol","500 mg","Viên nén sủi",""],
+  "Nasonex":["Mometason furoat","50 mcg/liều","Hỗn dịch xịt mũi","Bayer"],
+  "Spiriva Respimat":["Tiotropium","2,5 mcg/nhát","Dung dịch hít","Boehringer Ingelheim"],
+  "Esomeprazole (STADA) 40 mg":["Esomeprazol","40 mg","Viên nén bao tan trong ruột",""],
+  "Silum (Flunarizin) 5 mg":["Flunarizin","5 mg","Viên nén",""],
+  "Pregabalin (Lyrica) 75 mg":["Pregabalin","75 mg","Viên nang cứng",""],
+  "Tramadol/Paracetamol  (Ultracet) 37.5/325 mg":["Tramadol + Paracetamol","37,5/325 mg","Viên nén bao phim",""],
+  "Tramadol/Paracetamol (Ultracet) 37.5/325 mg":["Tramadol + Paracetamol","37,5/325 mg","Viên nén bao phim",""],
+  "Meloxicam (Mobic) 7.5 mg":["Meloxicam","7,5 mg","Viên nén",""],
+  "Atorvastatin (Atorhasan) 20 mg":["Atorvastatin","20 mg","Viên nén bao phim",""],
+  "Olanzapine (Olanxol) 10 mg":["Olanzapin","10 mg","Viên nén bao phim",""],
+  "Silymarin (Legalon) 140 mg":["Silymarin","140 mg","Viên nang cứng",""],
+  "Fexofenadine (Telfast) 180 mg":["Fexofenadin","180 mg","Viên nén bao phim",""],
+  "Ambroxol (Mucosolvan) 30 mg":["Ambroxol","30 mg","Viên nén",""],
+  "Mometason furoat (Nasonex) 0.05%":["Mometason furoat","0,05%","Hỗn dịch xịt mũi","Bayer"],
+  "Xisat 75 mL":["Nước biển sâu (NaCl)","","Dung dịch xịt mũi",""],
+  "Berocca":["Vitamin nhóm B, C + khoáng chất","","Viên sủi","Bayer"],
+  "Vitamin 3B (Scanneuron)":["Vitamin B1 + B6 + B12","","Viên nén bao đường",""],
+  "Vitamin 3B (Neurobion)":["Vitamin B1 + B6 + B12","","Viên nén bao",""],
+  "Citicolin 500 mg":["Citicolin","500 mg","Viên nén bao phim",""],
+  "Ginkgo Biloba (Tanakan) 40 mg":["Ginkgo biloba (EGb 761)","40 mg","Viên nén bao phim",""],
+  "Xatral XL (Alfuzosin) 10 mg":["Alfuzosin","10 mg","Viên nén phóng thích kéo dài",""],
+  "Spiolto Respimat":["Tiotropium + Olodaterol","2,5/2,5 mcg","Dung dịch hít","Boehringer Ingelheim"],
+  "Amoxicillin/Acid Clavulanic (Augmentin) 1 g":["Amoxicillin + Acid clavulanic","875/125 mg","Viên nén bao phim","GSK"],
+  "Desloratadin (Lorastad D) 5 mg":["Desloratadin","5 mg","Viên nén bao phim",""],
+  "Methylprednisolon (Medrol) 16 mg":["Methylprednisolon","16 mg","Viên nén",""],
+  "Azithromycin 500 mg":["Azithromycin","500 mg","Viên nén bao phim",""],
+  "Roruvastatin (Crestor) 10 mg":["Rosuvastatin","10 mg","Viên nén bao phim",""],
+  "Amlodipine + Losartan (Cozaaz XQ) 5/50 mg":["Amlodipin + Losartan","5/50 mg","Viên nén bao phim",""],
+  "Allopurinol (Zyloric) 300 mg":["Allopurinol","300 mg","Viên nén",""],
+  "Amlodipine (Amlor) 5 mg":["Amlodipin","5 mg","Viên nang",""],
+  "Savi-Losartan (Losartan) 50 mg":["Losartan","50 mg","Viên nén bao phim",""],
+  "Atorvastatin (Lipitor) 20 mg":["Atorvastatin","20 mg","Viên nén bao phim",""],
+  "Clopidogrel (Clopistad) 75 mg":["Clopidogrel","75 mg","Viên nén bao phim",""],
+  "Diosmin + Hesperidin (Daflon) 500 mg":["Diosmin + Hesperidin","450/50 mg","Viên nén bao phim",""],
+  "Diosmin + Hesperidin (DilodinDHG) 500 mg":["Diosmin + Hesperidin","450/50 mg","Viên nén bao phim","DHG Pharma"],
+  "Pregabalin (Antivic) 75 mg":["Pregabalin","75 mg","Viên nang cứng",""],
+  "Aspirin 81 mg":["Acid acetylsalicylic","81 mg","Viên nén bao tan trong ruột",""],
+  "Furosemide (Agifuros) 40 mg":["Furosemid","40 mg","Viên nén",""],
+  "Kalium Chloratum 0.5 g":["Kali clorid","0,5 g","Viên nén",""],
+  "Lipalthyl (Fenofibrate) 300 mg":["Fenofibrat","300 mg","Viên nang cứng",""],
+  "Nexium (Esomeprazole) 40 mg":["Esomeprazol","40 mg","Viên nén bao tan trong ruột","AstraZeneca"],
+  "Amoxicillin 500 mg":["Amoxicillin","500 mg","Viên nang cứng",""],
+  "Flagyl (Metronidazole) 500 mg":["Metronidazol","500 mg","Viên nén bao phim",""],
+  "Clarythromycin 500 mg":["Clarithromycin","500 mg","Viên nén bao phim",""],
+  "Metformine (Glucophage) XR 850 mg":["Metformin","850 mg","Viên nén phóng thích kéo dài",""],
+  "Tanganil 500 mg":["Acetylleucin","500 mg","Viên nén",""],
+  "Betaserc 16 mg":["Betahistin","16 mg","Viên nén",""],
+  "Piracetam 1200 mg":["Piracetam","1200 mg","Viên nén bao phim",""],
+  "Lyrica 75 mg":["Pregabalin","75 mg","Viên nang cứng",""],
+  "Spiromide 20/50 mg":["Furosemid + Spironolacton","20/50 mg","Viên nén",""],
+  "Enat 400 mg":["Vitamin E","400 IU","Viên nang mềm",""],
+  "Galvus Met 50/500 mg (Vildagliptin + Metformin)":["Vildagliptin + Metformin","50/500 mg","Viên nén bao phim","Novartis"],
+  "Jardiance duo 12,5/1000 mg (Empagliflozin + Metformin)":["Empagliflozin + Metformin","12,5/1000 mg","Viên nén bao phim","Boehringer Ingelheim"],
+  "Novomix 30 Flexpen 100IU/mL":["Insulin aspart (2 pha 30/70)","100 IU/mL","Hỗn dịch tiêm","Novo Nordisk"],
+  "Diamicron 60 mg (Gliclazide)":["Gliclazid","60 mg","Viên nén phóng thích cải tiến","Servier"],
+  "Aprovel 150 mg (Irbesartan)":["Irbesartan","150 mg","Viên nén bao phim","Sanofi"],
+  "Forxiga 10 mg (Dapagliflozin)":["Dapagliflozin","10 mg","Viên nén bao phim","AstraZeneca"],
+  "Exforge 5/160 mg (Amlodipine + Valsartan)":["Amlodipin + Valsartan","5/160 mg","Viên nén bao phim","Novartis"],
+  "Concor 2.5 mg (Bisoprolol)":["Bisoprolol","2,5 mg","Viên nén bao phim","Merck"],
+  "Lipistad (Atorvastatin) 10mg":["Atorvastatin","10 mg","Viên nén bao phim",""],
+  "Dalacin C 300mg":["Clindamycin","300 mg","Viên nang cứng","Pfizer"],
+  "Janumet 50/1000mg":["Sitagliptin + Metformin","50/1000 mg","Viên nén bao phim","MSD"],
+  "Nexium (Esomeprazole) 20 mg":["Esomeprazol","20 mg","Viên nén bao tan trong ruột","AstraZeneca"],
+  "Eliquis 2,5mg":["Apixaban","2,5 mg","Viên nén bao phim","Pfizer/BMS"],
+  "X-Healer":["Thực phẩm bổ sung hỗ trợ lành vết thương","","Gói cốm",""],
+  "Special Kid Multivitamin":["Đa vitamin & khoáng chất","","Dung dịch uống","Special Kid (Pháp)"],
+  "Atorvastatin (Atorhasan) 10 mg":["Atorvastatin","10 mg","Viên nén bao phim",""],
+  "Piracetam 800 mg":["Piracetam","800 mg","Viên nén bao phim",""],
+  "Acorxia 60 mg":["Etoricoxib","60 mg","Viên nén bao phim",""],
+  "Myonal 50 mg":["Eperison","50 mg","Viên nén bao phim","Eisai"],
+  "Glucosamine 500 mg (Stella)":["Glucosamin sulfat","500 mg","Viên nang cứng","Stella"],
+  "Metformin (Glucophage XR) 1000 mg":["Metformin","1000 mg","Viên nén phóng thích kéo dài","Merck"],
+  "Saxenda (Liraglutide)":["Liraglutid","6 mg/mL (bút tiêm)","Dung dịch tiêm","Novo Nordisk"],
+  "Exforge hct 5/160/12.5 mg (Amlodipine + Valsartan + hydrochlorothiazid)":["Amlodipin + Valsartan + Hydroclorothiazid","5/160/12,5 mg","Viên nén bao phim","Novartis"],
+  "Magne B6 (Corbiere)":["Magnesi lactat + Pyridoxin (B6)","470/5 mg","Viên nén bao phim","Sanofi (Corbiere)"],
+  "Neutriviit (Vitamin 3B)":["Vitamin B1 + B6 + B12","","Viên nén bao phim",""],
+  "Pantoloc (Pantoprazole) 40 mg":["Pantoprazol","40 mg","Viên nén bao tan trong ruột","Takeda"],
+  "Fluoxetin 20 mg":["Fluoxetin","20 mg","Viên nang cứng",""],
+  "Singulair 10 mg":["Montelukast","10 mg","Viên nén bao phim","MSD"],
+  "Bilaxten 10 mg":["Bilastin","10 mg","Viên nén","Menarini"],
+  "Zinnat 500 mg":["Cefuroxim","500 mg","Viên nén bao phim","GSK"],
+  "Savi Esomeprazole 40 mg":["Esomeprazol","40 mg","Viên nén bao tan trong ruột","SaVipharm"],
+  "Paroxetine 20 mg":["Paroxetin","20 mg","Viên nén bao phim",""],
+  "Pradaxa (Dabigatran) 110 mg":["Dabigatran etexilat","110 mg","Viên nang cứng","Boehringer Ingelheim"],
+  "Pradaxa (Dabigatran) 150 mg":["Dabigatran etexilat","150 mg","Viên nang cứng","Boehringer Ingelheim"],
+  "Xarelto (Rivaroxaban) 10 mg":["Rivaroxaban","10 mg","Viên nén bao phim","Bayer"],
+  "Xarelto (Rivaroxaban) 15 mg":["Rivaroxaban","15 mg","Viên nén bao phim","Bayer"],
+  "Xarelto (Rivaroxaban) 20 mg":["Rivaroxaban","20 mg","Viên nén bao phim","Bayer"],
+  "Betaloc Zok (Metoprolol) 25 mg":["Metoprolol succinat","25 mg","Viên nén phóng thích kéo dài","AstraZeneca"],
+  "Betaloc Zok (Metoprolol) 50 mg":["Metoprolol succinat","50 mg","Viên nén phóng thích kéo dài","AstraZeneca"],
+  "Concor (Bisoprolol) 5 mg":["Bisoprolol","5 mg","Viên nén bao phim","Merck"],
+  "Micardis (Telmisartan) 40 mg":["Telmisartan","40 mg","Viên nén","Boehringer Ingelheim"],
+  "Ednyt (Enalapril) 5 mg":["Enalapril","5 mg","Viên nén","Gedeon Richter"],
+  "Ednyt (Enalapril) 10 mg":["Enalapril","10 mg","Viên nén","Gedeon Richter"],
+  "Imidu (Isosorbide Mononitrate) 60 mg":["Isosorbid mononitrat","60 mg","Viên nén phóng thích kéo dài","STADA"],
+  "Biresort (Isosorbide Dinitrate) 10 mg":["Isosorbid dinitrat","10 mg","Viên nén",""],
+  "Nitrostad (Trinitrate) 2,5 mg":["Glyceryl trinitrat","2,5 mg","Viên nén phóng thích kéo dài","STADA"],
+  "Diovan (Valsartan) 80 mg":["Valsartan","80 mg","Viên nén bao phim","Novartis"],
+  "Diovan (Valsartan) 160 mg":["Valsartan","160 mg","Viên nén bao phim","Novartis"],
+  "Carvedilol 12,5 mg":["Carvedilol","12,5 mg","Viên nén",""],
+  "Nitromint (Trinitrate) 2,6 mg":["Glyceryl trinitrat (Nitroglycerin)","2,6 mg","Viên nén phóng thích kéo dài","Egis"],
+  "Vasostrate (Trinitrate) 30 mg":["Glyceryl trinitrat","30 mg","Viên nén phóng thích kéo dài",""],
+  "Procoralan (Ivabradine) 5 mg":["Ivabradin","5 mg","Viên nén bao phim","Servier"],
+  "Procoralan (Ivabradine) 7,5 mg":["Ivabradin","7,5 mg","Viên nén bao phim","Servier"],
+  "Nebilet (Nebivolol) 5 mg":["Nebivolol","5 mg","Viên nén","Berlin-Chemie/Menarini"],
+  "Cordarone (Amiodarone) 150 mg/3 mL (ống)":["Amiodaron","150 mg/3 mL","Dung dịch tiêm","Sanofi"],
+  "Cordarone (Amiodarone) 200 mg (viên)":["Amiodaron","200 mg","Viên nén","Sanofi"],
+  "Domperidon 10 mg":["Domperidon","10 mg","Viên nén",""],
+  "Primperan (Metoclopramide) 10 mg (ống)":["Metoclopramid","10 mg/2 mL","Dung dịch tiêm","Sanofi"],
+  "Levothyrox (Levothyroxine) 100 mcg":["Levothyroxin","100 mcg","Viên nén","Merck"],
+  "PTU (Propylthiouracil) 50 mg":["Propylthiouracil","50 mg","Viên nén",""],
+  "Lacipil (Lacidipine) 4 mg":["Lacidipin","4 mg","Viên nén bao phim","GSK"]
+};
+
+/* ===== Lưu trữ ===== */
+const LS_DRUGS="rx_drugs_v1", LS_SAVED="rx_saved_v2", LS_PATIENTS="rx_patients_v1";
+function jget(k,def){try{const v=JSON.parse(localStorage.getItem(k));return v==null?def:v;}catch(e){return def;}}
+function jset(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+
+function seedDrugs(){return DEFAULT_DRUGS.map(x=>{const nm=x[0].trim();const i=DRUG_INFO[x[0]]||DRUG_INFO[nm]||[];return {name:nm,price:x[1],hc:i[0]||'',ham:i[1]||'',dbc:i[2]||'',ct:i[3]||''};});}
+let drugs=(()=>{const d=jget(LS_DRUGS,null);
+  if(Array.isArray(d)&&d.length)return d.map(x=>{const inf=DRUG_INFO[x.name]||[];return {name:x.name,price:x.price,hc:x.hc||inf[0]||'',ham:x.ham||inf[1]||'',dbc:x.dbc||inf[2]||'',ct:x.ct||inf[3]||''};});
+  return seedDrugs();})();
+function saveDrugs(){jset(LS_DRUGS,drugs);}
+/* Đổi tên thuốc: bỏ hoạt chất, chỉ giữ tên thương mại + hàm lượng (hoạt chất đã có cột riêng) */
+const RENAME={
+  "Paracetamol (Tylenol) 500 mg":"Tylenol 500 mg",
+  "Cefuroxim (VIDIPHA) 500 mg":"Cefuroxim VIDIPHA 500 mg",
+  "Paracetamol (CHOAY) 500 mg":"Paracetamol Choay 500 mg",
+  "Esomeprazole (STADA) 40 mg":"Esomeprazol STADA 40 mg",
+  "Silum (Flunarizin) 5 mg":"Silum 5 mg",
+  "Pregabalin (Lyrica) 75 mg":"Lyrica 75 mg",
+  "Tramadol/Paracetamol  (Ultracet) 37.5/325 mg":"Ultracet 37.5/325 mg",
+  "Tramadol/Paracetamol (Ultracet) 37.5/325 mg":"Ultracet 37.5/325 mg",
+  "Meloxicam (Mobic) 7.5 mg":"Mobic 7.5 mg",
+  "Atorvastatin (Atorhasan) 20 mg":"Atorhasan 20 mg",
+  "Olanzapine (Olanxol) 10 mg":"Olanxol 10 mg",
+  "Silymarin (Legalon) 140 mg":"Legalon 140 mg",
+  "Fexofenadine (Telfast) 180 mg":"Telfast 180 mg",
+  "Ambroxol (Mucosolvan) 30 mg":"Mucosolvan 30 mg",
+  "Mometason furoat (Nasonex) 0.05%":"Nasonex 0.05%",
+  "Vitamin 3B (Scanneuron)":"Scanneuron",
+  "Vitamin 3B (Neurobion)":"Neurobion",
+  "Ginkgo Biloba (Tanakan) 40 mg":"Tanakan 40 mg",
+  "Xatral XL (Alfuzosin) 10 mg":"Xatral XL 10 mg",
+  "Amoxicillin/Acid Clavulanic (Augmentin) 1 g":"Augmentin 1 g",
+  "Desloratadin (Lorastad D) 5 mg":"Lorastad D 5 mg",
+  "Methylprednisolon (Medrol) 16 mg":"Medrol 16 mg",
+  "Roruvastatin (Crestor) 10 mg":"Crestor 10 mg",
+  "Amlodipine + Losartan (Cozaaz XQ) 5/50 mg":"Cozaaz XQ 5/50 mg",
+  "Allopurinol (Zyloric) 300 mg":"Zyloric 300 mg",
+  "Amlodipine (Amlor) 5 mg":"Amlor 5 mg",
+  "Savi-Losartan (Losartan) 50 mg":"Savi-Losartan 50 mg",
+  "Atorvastatin (Lipitor) 20 mg":"Lipitor 20 mg",
+  "Clopidogrel (Clopistad) 75 mg":"Clopistad 75 mg",
+  "Diosmin + Hesperidin (Daflon) 500 mg":"Daflon 500 mg",
+  "Diosmin + Hesperidin (DilodinDHG) 500 mg":"DilodinDHG 500 mg",
+  "Pregabalin (Antivic) 75 mg":"Antivic 75 mg",
+  "Furosemide (Agifuros) 40 mg":"Agifuros 40 mg",
+  "Lipalthyl (Fenofibrate) 300 mg":"Lipalthyl 300 mg",
+  "Nexium (Esomeprazole) 40 mg":"Nexium 40 mg",
+  "Flagyl (Metronidazole) 500 mg":"Flagyl 500 mg",
+  "Metformine (Glucophage) XR 850 mg":"Glucophage XR 850 mg",
+  "Galvus Met 50/500 mg (Vildagliptin + Metformin)":"Galvus Met 50/500 mg",
+  "Jardiance duo 12,5/1000 mg (Empagliflozin + Metformin)":"Jardiance Duo 12,5/1000 mg",
+  "Diamicron 60 mg (Gliclazide)":"Diamicron 60 mg",
+  "Aprovel 150 mg (Irbesartan)":"Aprovel 150 mg",
+  "Forxiga 10 mg (Dapagliflozin)":"Forxiga 10 mg",
+  "Exforge 5/160 mg (Amlodipine + Valsartan)":"Exforge 5/160 mg",
+  "Concor 2.5 mg (Bisoprolol)":"Concor 2.5 mg",
+  "Lipistad (Atorvastatin) 10mg":"Lipistad 10mg"
+};
+(function(){let ch=false;const ST=/\s*\d[\d.,\/]*\s*(?:mg|g|mcg|µg|ml|iu|%)\b.*$/i;drugs.forEach(d=>{let nn=RENAME[d.name]||d.name;nn=nn.replace(ST,'').trim();if(nn&&nn!==d.name){d.name=nn;ch=true;}});if(ch)saveDrugs();})();
+const DAV_DB=[];
+function displayName(d){return d.name+(d.ham?` ${d.ham}`:'')+(d.hc?`\n(${d.hc})`:'');}
+function davDisplay(r){return r[0]+(r[1]?`\n(${r[1]})`:'');}
+let DISPLAY_INDEX={},SUG_KEYS=[];
+function buildIndex(){
+  DISPLAY_INDEX={};
+  drugs.forEach(d=>{DISPLAY_INDEX[displayName(d)]={name:d.name,hc:d.hc,ham:d.ham,dbc:d.dbc,ct:d.ct,price:Number(d.price)||0};});
+  SUG_KEYS=Object.keys(DISPLAY_INDEX);
+}
+function drugByDisplay(v){v=(v||'').trim();if(DISPLAY_INDEX[v])return DISPLAY_INDEX[v];const d=drugs.find(x=>x.name===v);if(d)return {name:d.name,hc:d.hc,ham:d.ham,dbc:d.dbc,ct:d.ct,price:Number(d.price)||0};const r=DAV_DB.find(x=>x[0]===v);if(r)return{name:r[0],hc:r[1],ham:r[2],dbc:r[3],ct:r[4],price:0};return null;}
+function priceOf(name){const d=drugByDisplay(name);return d?Number(d.price)||0:0;}
+(function(){if(jget('rx_dav_cleaned',false))return;const ST=/\s*\d[\d.,\/]*\s*(?:mg|g|mcg|µg|ml|iu|%)\b.*$/i;const orig=new Set(DEFAULT_DRUGS.map(x=>{const r=RENAME[x[0]]||x[0];return r.replace(ST,'').trim().toLowerCase();}));const before=drugs.length;drugs=drugs.filter(d=>orig.has((d.name||'').toLowerCase())||(Number(d.price)||0)>0);if(drugs.length!==before)saveDrugs();jset('rx_dav_cleaned',true);})();
+(function(){if(jget('rx_add_gocong',false))return;const NEW=[
+["Cimetidin","Cimetidin","300 mg","Viên nén"],
+["Debridat","Trimebutin","300 mg","Viên nén"],
+["Trimetabutine","Trimebutin","300 mg","Viên nén"],
+["Ferrovit","Sắt (II) fumarat + Acid folic","","Viên nang mềm"],
+["Proctolog","Ruscogenin + Trimebutin","","Viên đạn / kem bôi"],
+["Creon","Pancreatin","2500 UI","Viên nang"],
+["Pantoloc","Pantoprazol","40 mg","Viên nén bao tan trong ruột"],
+["Buscopan","Hyoscin butylbromid","20 mg","Viên nén bao đường"],
+["Prozac","Fluoxetin","20 mg","Viên nang cứng"],
+["Fluoxetin","Fluoxetin","20 mg","Viên nang cứng"],
+["Bioflora","Saccharomyces boulardii","","Gói bột"],
+["Progermina","Bacillus clausii","","Ống uống"],
+["Enterogermina","Bacillus clausii","","Ống uống"],
+["Otilonium bromide","Otilonium bromid","40 mg","Viên nén bao phim"],
+["Spasmomen","Otilonium bromid","40 mg","Viên nén bao phim"],
+["Ebastine","Ebastin","10 mg","Viên nén"],
+["Ramosetron","Ramosetron","5 mcg","Viên nén"],
+["Amitryptiline","Amitriptylin","25 mg","Viên nén bao phim"],
+["Loperamide","Loperamid","2 mg","Viên nang"],
+["Refix","Rifaximin","550 mg","Viên nén bao phim"],
+["Nexium","Esomeprazol","20 mg","Viên nén bao tan trong ruột"]
+];const have=new Set(drugs.map(d=>((d.name||'')+'|'+(d.ham||'')).toLowerCase()));NEW.forEach(r=>{const k=(r[0]+'|'+r[2]).toLowerCase();if(!have.has(k)){have.add(k);drugs.push({name:r[0],price:0,hc:r[1],ham:r[2],dbc:r[3],ct:''});}});saveDrugs();jset('rx_add_gocong',true);})();
+/* Đồng bộ toàn bộ danh mục mặc định vào localStorage (để thuốc mới thêm trong code luôn hiển thị) */
+(function(){if(jget('rx_sync_default_v3',false))return;const ST=/\s*\d[\d.,\/]*\s*(?:mg|g|mcg|µg|ml|iu|%)\b.*$/i;function base(n){let nn=RENAME[n]||n;return nn.replace(ST,'').trim();}const have=new Set(drugs.map(d=>((d.name||'')+'|'+(d.ham||'')).toLowerCase()));DEFAULT_DRUGS.forEach(x=>{const full=(x[0]||'').trim();const inf=DRUG_INFO[full]||DRUG_INFO[x[0]]||[];const nm=base(full);const ham=inf[1]||'';const k=(nm+'|'+ham).toLowerCase();if(nm&&!have.has(k)){have.add(k);drugs.push({name:nm,price:x[1]||0,hc:inf[0]||'',ham:ham,dbc:inf[2]||'',ct:inf[3]||''});}});saveDrugs();jset('rx_sync_default_v3',true);})();
+
+/* Thêm danh mục thuốc bổ sung (BS Thanh) - chạy 1 lần, không xoá thuốc cũ */
+(function(){if(jget('rx_add_thanh_2026_v1',false))return;const NEW=[
+["Mozoly","Natri alginat + Natri bicarbonat","","Hỗn dịch uống"],
+["Enterpass","Men tiêu hoá (đa enzym)","","Viên nén"],
+["Legalon","Silymarin","140 mg","Viên nang"],
+["Legalon","Silymarin","70 mg","Viên nang"],
+["Filgrastim","Filgrastim (G-CSF)","","Ống/bút tiêm"],
+["Egolanza","Olanzapin","10 mg","Viên nén"],
+["Pentasa","Mesalazin","","Viên/gói phóng thích kéo dài"],
+["Mesalamin","Mesalazin","","Viên/gói"],
+["Diamox","Acetazolamid","250 mg","Viên nén"],
+["Adrenoxyl","Carbazochrom","10 mg","Viên nén"],
+["Zopistad","Zopiclon","7,5 mg","Viên nén"],
+["Theralene","Alimemazin","5 mg","Viên nén"],
+["Cetraxal","Ciprofloxacin","0,25%","Dung dịch nhỏ tai"],
+["Durogesic","Fentanyl","25 mcg/giờ","Miếng dán"],
+["Micezym","Men tiêu hoá","","Viên nén"],
+["Creon","Pancreatin","","Viên nang"],
+["Meteospasmyl","Alverin citrat + Simethicon","","Viên nang"],
+["Feburic","Febuxostat","80 mg","Viên nén"],
+["Nintedanib","Nintedanib","","Viên nang"],
+["Allermin","Clorpheniramin","4 mg","Viên nén"],
+["Milarzepine","","","Viên nén"],
+["Donepezil","Donepezil","","Viên nén"],
+["Losartan","Losartan","","Viên nén"],
+["Vincerol","Acenocoumarol","","Viên nén"],
+["Avodart","Dutasterid","0,5 mg","Viên nang"],
+["Harnal Ocas","Tamsulosin","0,4 mg","Viên phóng thích kéo dài"],
+["Diamicron MR","Gliclazid","30 mg","Viên phóng thích kéo dài"],
+["Trajenta","Linagliptin","5 mg","Viên nén"],
+["Exforge HCT","Amlodipin + Valsartan + Hydroclorothiazid","","Viên nén"],
+["Citalopram","Citalopram","20 mg","Viên nén"],
+["Spiriva","Tiotropium","","Bột hít"],
+["Seretide","Fluticason + Salmeterol","","Bột hít / xịt"],
+["Babycanyl","Terbutalin + Guaifenesin","","Siro"],
+["Gasmotin","Mosaprid","5 mg","Viên nén"],
+["Dorithricin","Tyrothricin + Benzalkonium + Benzocain","","Viên ngậm"],
+["Elthon","Itoprid","50 mg","Viên nén"],
+["Remeron","Mirtazapin","30 mg","Viên nén"],
+["Mirastad","Mirtazapin","30 mg","Viên nén"],
+["Pyostacin","Pristinamycin","500 mg","Viên nén"],
+["Borraginol","","","Viên đạn đặt hậu môn"],
+["Boldolaxine","","","Viên nhuận tràng"],
+["Bisacodyl","Bisacodyl","5 mg","Viên bao tan trong ruột"],
+["Leolen forte","","","Viên nang"],
+["Mucosta","Rebamipid","100 mg","Viên nén"],
+["Rebamipid","Rebamipid","100 mg","Viên nén"],
+["Panangin","Kali aspartat + Magnesi aspartat","","Viên nén"],
+["Trihexyphenidyl","Trihexyphenidyl","","Viên nén"],
+["Tebonin","Ginkgo biloba (EGb 761)","120 mg","Viên nén"],
+["Cerecozin","Citicolin","","Viên nén"],
+["Citicholin","Citicolin","","Viên nén"],
+["Bilaxten","Bilastin","20 mg","Viên nén"],
+["Baifem","","","Kem bôi"],
+["Forsancort","Triamcinolon acetonid","","Gel bôi niêm mạc miệng"],
+["Xigduo","Dapagliflozin + Metformin","","Viên nén"],
+["Xigduo XR","Dapagliflozin + Metformin","10/500 mg","Viên phóng thích kéo dài"],
+["Gastrylstad","Nhôm + Magnesi (kháng acid)","","Viên/hỗn dịch"],
+["Air-X","Simethicon","","Viên nhai"],
+["Vascepa","Icosapent ethyl (EPA)","1 g","Viên nang"],
+["Lovaza","Omega-3 acid ethyl ester","1 g","Viên nang"],
+["Lopid","Gemfibrozil","600 mg","Viên nén"],
+["Lipanthyl","Fenofibrat","","Viên nang"],
+["Tricor","Fenofibrat","48 mg","Viên nén"],
+["Zetia","Ezetimib","10 mg","Viên nén"],
+["Repatha","Evolocumab","140 mg","Bút tiêm"],
+["Praluent","Alirocumab","75 mg","Bút tiêm"],
+["Neosporin","Neomycin + Polymyxin B + Bacitracin","","Thuốc mỡ bôi"],
+["Mepoly","","","Viên nén"],
+["Eumovate","Clobetason butyrat","","Kem bôi"],
+["Trymo","Bismuth subcitrat","120 mg","Viên nén"],
+["Amebismo","Bismuth subsalicylat","525 mg","Gói bột"],
+["Pirolam","Ciclopirox","","Dung dịch thoa"],
+["Yunnan Baiyao","Đông dược (cầm máu)","","Bột / viên"],
+["Synatura","Cao lá thường xuân + Hoàng cầm","10 mL","Siro"],
+["Diacerein","Diacerein","50 mg","Viên nang"],
+["Bs-one","","","Viên nén"],
+["Methocarbamol","Methocarbamol","1 g","Ống tiêm"],
+["Neo-Tergynan","Neomycin + Nystatin + Metronidazol","","Viên đặt âm đạo"],
+["Prozac","Fluoxetin","20 mg","Viên nang"],
+["Lexomil","Bromazepam","6 mg","Viên nén"],
+["Otilonium bromide","Otilonium bromid","40 mg","Viên nén"],
+["Ebastine","Ebastin","10 mg","Viên nén"],
+["Diphenoxylate","Diphenoxylat + Atropin","","Viên nén"],
+["Spasmomen","Otilonium bromid","40 mg","Viên nén"],
+["Avamys","Fluticason furoat","","Xịt mũi"],
+["Dymista","Azelastin + Fluticason","","Xịt mũi"],
+["Meseca forte","","","Viên nén"],
+["Cyclonamine","Etamsylat","250 mg/2 mL","Ống tiêm"],
+["Dostinex","Cabergolin","0,5 mg","Viên nén"],
+["Star","","","Viên ngậm ho"],
+["Ozempic","Semaglutid","","Bút tiêm"],
+["Saxenda","Liraglutid","","Bút tiêm"],
+["Wegovy","Semaglutid","","Bút tiêm"],
+["Ginkor Fort","Ginkgo biloba + Heptaminol + Troxerutin","","Viên nang"],
+["Rutin C","Rutin + Vitamin C","500 mg","Viên nén"],
+["Trivastal","Piribedil","50 mg","Viên phóng thích kéo dài"],
+["Pramipexol","Pramipexol","","Viên nén"],
+["Meyerzadin","","","Viên nén"],
+["Ramosetron","Ramosetron","5 mcg","Viên nén"],
+["Therasorb","","","Băng/gạc vết thương"],
+["Probio","Men vi sinh","","Gói/viên"],
+["Askina Gel","","","Gel vết thương"],
+["Multidex","Maltodextrin","","Bột vết thương"],
+["Calgitrol / Urgo Hydrogel","","","Gel/băng vết thương"],
+["Silvirin","Bạc sulfadiazin","1%","Kem bôi"],
+["Trelegy Ellipta","Fluticason + Umeclidinium + Vilanterol","","Bột hít"],
+["Zinforo","Ceftarolin fosamil","","Bột pha tiêm"],
+["Hyalo Plus","Acid hyaluronic","","Gel/dung dịch"],
+["Glyxambi","Empagliflozin + Linagliptin","25/5 mg","Viên nén"],
+["Breztri","Budesonid + Glycopyrronium + Formoterol","160/7,2/5 mcg","Bình xịt định liều"],
+["Lyapi","","50 mg","Viên nén"],
+["Trazodone","Trazodon","50 mg","Viên nén"],
+["Uperio","Sacubitril + Valsartan","50 mg","Viên nén"],
+["Foxiga","Dapagliflozin","5 mg","Viên nén"],
+["Foxiga","Dapagliflozin","10 mg","Viên nén"],
+["Tadeno","","50 mg","Viên nén"],
+["Solacy Adulte","Kẽm + Mangan + Đồng","","Viên nang"],
+["Flexsa","Glucosamin + Chondroitin","1,5 g","Gói bột"],
+["Hepa-merz","L-Ornithin L-Aspartat (LOLA)","","Gói/ống"],
+["Ulistin","Ulinastatin","","Bột pha tiêm"],
+["Futhan","Nafamostat mesilat","","Bột pha tiêm"],
+["Foy","Gabexat mesilat","","Bột pha tiêm"],
+["Thiogamma Turbo-Set","Acid thioctic (alpha-lipoic)","600 mg/50 mL","Dung dịch tiêm truyền"],
+["Kremil-S","Nhôm hydroxyd + Magnesi hydroxyd + Simethicon","","Viên nhai"],
+["Betmiga","Mirabegron","","Viên phóng thích kéo dài"]
+];const have=new Set(drugs.map(d=>((d.name||'')+'|'+(d.ham||'')).toLowerCase()));NEW.forEach(r=>{const k=(r[0]+'|'+r[2]).toLowerCase();if(!have.has(k)){have.add(k);drugs.push({name:r[0],price:0,hc:r[1],ham:r[2],dbc:r[3],ct:''});}});saveDrugs();jset('rx_add_thanh_2026_v1',true);})();
+
+let patients=jget(LS_PATIENTS,[]);
+let rxAll=jget(LS_SAVED,[]);
+let protocols=jget('rx_protocols_v1',[]);
+function saveProtocols(){jset('rx_protocols_v1',protocols);}
+const PROTO_SEED=[{"name":"Đái tháo đường","items":[{"name":"Glucophage (Metformin) 500mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v (U) ngày."},{"name":"Diamicron MR (Gliclazide) 30 mg, 60 mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v (U) sáng"},{"name":"Amaryl (Glimepiride) 1 mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1 viên (U) sáng"},{"name":"Pioglitazone STADA 15, 30 mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1 viên (U)"},{"name":"Glucophage XR (Metformin) 500, 850, 1000 mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"(U) uống buổi chiều sau ăn"},{"name":"Onglyza (Saxagliptin) 5mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v (U)"},{"name":"Trajenta (Linagliptin) 5mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v (U)"},{"name":"Galvus 50 mg (Vidagliptin)","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v (U)"},{"name":"Januvia (Sitagliptin) 100mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v (U)"},{"name":"Galvus met 50/1000 mg (Vildagliptin + Metformin)","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v (U)"},{"name":"Janumet 50/1000 mg (Sitagliptin + Metformin)","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v (U) 2 loại IR và XR"},{"name":"Forxiga (Dapagliflozin) 5, 10 mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v (U)"},{"name":"Jardiance (Empagliflozin) 10, 25 mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v (U)"},{"name":"Jardiance duo 12.5/1000mg (Empagliflozin + Metformin)","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1 viên (U)"}]},{"name":"Ceton Đái tháo đường","items":[{"name":"Ringer Fundin 500mL","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"2 chai (TTM) C g/ph"},{"name":"Insulin Actrapid 50 IU + NaCl 0.9% đủ 50mL","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"(BTĐ) 0,1IU/kg"},{"name":"Glucose 5% 500mL","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"(TTM) XXX giọt/phút (ĐHMM: 200-250)"},{"name":"Ringer Fundin 500mL + KCl 10% 10mL","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1A (TTM) LX giọt/phút"}]},{"name":"Liệt dạ dày","items":[{"name":"Primperan (metoclopramide) 10mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1 viên x 3 (U)"},{"name":"Motilium M 10mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1 viên x 3 (U)"},{"name":"Erythromycin 250mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1 gói x 3 (U)"},{"name":"Benadryl (Diphehydramine) 12,5mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1 gói x 3 (U)"},{"name":"Zofran (Ondansetron) 4 mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1 viên x 3 (U)"}]},{"name":"Tê tay chân","items":[{"name":"Neurontin (gabapentin) 300mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1 viên x 2 (U)"},{"name":"Duloxetine 30mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1 viên (U)"}]},{"name":"Tăng huyết áp","items":[{"name":"Nifedipine Retard 20mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v x 2 (U) trước ăn 2 giờ"},{"name":"Adalat LA 60mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v (U) trước ăn 2 giờ"},{"name":"Agidopa (Methyldopa) 250mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v x 3 (U)"}]},{"name":"Herpes Zoster","items":[{"name":"Acyclovir STADA 800mg viên x 5","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"(U) trong 7 ngày."},{"name":"Amitryptyline 25mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v (U) tối"},{"name":"Neurontin (gabapentin) 300mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v x 2 (U)"},{"name":"Ultracet 325/37,5 mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1 viên x 2 (U)"},{"name":"Medrol 16mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"2v (U) sáng trong 7 ngày sau đó giảm dần liều khi đau nhiều"},{"name":"Acyclovir 250mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"2lọ + NaCl 0.9% 100mL (TTM) XXX g/ph x 3 lần/ngày"}]},{"name":"Viêm màng não do HSV","items":[{"name":"Acyclovir 250mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"2 lọ pha Natri Cloride 0.9% 100mL (TTM) XXX giọt/phút mỗi 8 giờ trong vòng 14 ngày"}]},{"name":"Rung nhĩ","items":[{"name":"Digoxin 0,5 mg/2ml","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"½ ống + nước cất 3ml (TMC) và sau đó"},{"name":"Cấp: Digoxin 0.5mg/2ml","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"¼ ống pha nước cất đủ 2ml (TMC) sau 8 giờ, 16 giờ. Đo điện tim trước mỗi lần tiêm nếu có dấu hiệu ngấm digoxin thì không tiêm nữa, chuyển sang uống duy trì."},{"name":"Không cấp: Digoxin 0,25mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"½ v (U) 7 ngày sau đó xét nghiệm lại nồng độ digoxin."},{"name":"Cordarone (Amiodarone) 150mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1A + G5% 10ml SE 60ml/h => hết 10 phút"},{"name":"Cordarone 150mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"4A + G5% 50ml SE 5ml/h (1mg/phút) trong 6h sau đó 2.5ml/h hết 8h"},{"name":"Cordarone 150","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"2A + G5% 50ml SE 5ml/h (0.5mg/phút) trong 10 giờ"},{"name":"Duy trì: Cordarone 200mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"2v x 2 (U)"}]},{"name":"Cường giáp","items":[{"name":"Propranolol 40mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"½ v (U)"},{"name":"Metoprolol (Betaloc Zok) 25mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v (U)"},{"name":"Atenolol 50mg 1/","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"2v (U)"},{"name":"Methimazole 10 mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v (U)"},{"name":"PTU (Propylthiouracil) 50mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"2v x 3 (U) sau đó giảm liều"},{"name":"Lugol 1%","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"10 giọt x 3 (U) 1 giờ sau uống PTU"},{"name":"Hydrocortisone 100mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1A x 3 (TMC)"},{"name":"Cholestyramine (questran) 4g","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1 gói x 3 (U)"}]},{"name":"Nhiễm nấm","items":[{"name":"Natricloride 0.9% 500mL","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"2 chai (TTM) C g/ph"},{"name":"Amphotericin B 50 mg/","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1 chai + Glucose 5% 500 mL 1 chai (TTM) XXX g/ph"},{"name":"Natricloride 0.9% 500mL","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1 chai + Kalichlorid 10% 10mL 2A + Magiesulfate 15% 10 mL 1A (TTM) XXX g/ph"},{"name":"Paracetamol 500mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v (U) 30 phút trước truyền"},{"name":"Dolargan 100mg/2mL","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1A (TB) hoặc 1/4A (TMC)"},{"name":"Pipolphen (Diphenhydramine) 100mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1A (TMC)"},{"name":"Cancidas 70mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1 lọ (TTM) 20 giọt/phút"},{"name":"Duy trì: Cancidas 50mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1 lọ (TTM) 20 giọt/phút"},{"name":"Fluconazol 150mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"6v (U)"},{"name":"Duy trì: Fluconazol 150mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"3v (U)"},{"name":"Fluconazol 150mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"5v (U) (800mg – 12mg/kg)"},{"name":"Duy trì: Fluconazol 150mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"3v (U) (400mg – 6mg/kg)"}]},{"name":"Bóc tách động mạch chủ","items":[{"name":"Tramadol 100mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1A (TB)"},{"name":"Nicardipine 10mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"2A + NaCl 0.9% 50mL (BTĐ) 12.5 ml/h (5mg/h)"}]},{"name":"Chóng mặt","items":[{"name":"Piracetam-EGIS (Piracetam) 3g/15mL","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1A + NaCl 0.9% 100mL (TTM) XXX g/ph (suy thận mạn giai đoạn cuối không dùng, <30: 1g/15mL)"},{"name":"Pracetam (Piracetam) 1200mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v (U) sáng"},{"name":"Tanganil 500mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1A (TMC)"},{"name":"Tanganil 500mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v x 2 (U)"},{"name":"Betaserc (Betahistine) 16mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v x 3 (U) dùng chóng mặt ngoại biên uống ít nhất 3 tháng."},{"name":"Stugeron 25mg (Cinarizin)","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v x 2 (U) ưu tiên kèm tai biến mạch máu não"},{"name":"Sibelium (Flunarizin) 5mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v x 2 (U) Ưu tiên điều trị đau nửa đầu"}]},{"name":"Cúm – Influenza","items":[{"name":"Tamiflu (Oseltamivir) 75mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v x 2 (U)"},{"name":"Người nhà: Tamiflu (Oseltamivir) 75mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v (U)"}]},{"name":"Dị ứng","items":[{"name":"Clorpheniramin 4mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v x 2 (U)"},{"name":"Dexclorpheniramin 2mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1 v x 2 (U)"},{"name":"Zyrtec (Cetirizin) 10mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v (U)"},{"name":"Xyzal (Levocetirizin) 5mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v (U)"},{"name":"Clarytine (Loratidin) 10mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v (U)"},{"name":"Arius (Desloratine) 5mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v (U)"},{"name":"Telfast (Fexofenadine) 180mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v (U)"},{"name":"Ebastine 10mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v (U)"},{"name":"Mizolastine 10 mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v (U)"}]},{"name":"Đau thần kinh","items":[{"name":"Gabapentin (Neurontin) 300mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v x 3 (U) ngày đầu uống 1 viên, rồi tăng dần"},{"name":"Lyrica (Pregabalin) 75mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v x 2 (U) tốt hơn hấp thu ổn định hơn gabapentin"},{"name":"Mg B6 (Corbiere)","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v x 2 (U)"},{"name":"Vitamin 3B (Neurobion)","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v x 3 (U)"},{"name":"Ginkgo biloba (Tanakan) 40mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v (U) tối"}]},{"name":"Hen ác tính","items":[{"name":"Diaphyllin 4,8%/5ml","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"2A + NaCl 0.9% 50ml (BTĐ) 3ml/h"},{"name":"Brycanyl 0.5mg 1/","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"2A x 3 (TDD)"},{"name":"MgSO4 10%/15ml","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"2A + NaCl 0.9% 50ml (BTĐ) 10ml/h truyền 4-6h"}]},{"name":"Ho","items":[{"name":"Neocodion 100mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v x 3 (U)"},{"name":"Bromhexin 8mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v x 3 (U)"},{"name":"Acetyl Cystein 200mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1 gói x 3 (U)"},{"name":"Theralene (Alimemazin) 5mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v x 2 (U)"}]},{"name":"Helicobacter pylori","items":[{"name":"Ospamox (Amoxicillin) 500mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"2v x 2 (U)"},{"name":"Tavanic (Levofloxacin) 500m g","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v (U)"},{"name":"Nexium 40mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v x 2 (U) trước ăn 30 phút"},{"name":"Clarithromycin 500mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v x 2 (U)"},{"name":"Metronidazole 500mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v x 2 (U)"},{"name":"Tetracycline 500mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v (U)"}]},{"name":"Ngộ độc Lidocaine","items":[{"name":"Lipofundin 20% 250 mL","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1 chai (TTM) bolus 100mL (1,5 mL/kg)"},{"name":"Sau đó duy trì (TTM)","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"250 giọt/phút (0,25 mL/kg/phút)"},{"name":"Giảm dần liều sau mỗi 15 phút, liều tối đa","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"bolus 12 mL/Kg"}]},{"name":"Liệt ruột","items":[{"name":"Primperan (Metoclopramide) 10mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1A x 3 (TMC) 30 phút trước ăn"},{"name":"Neostigmine 0,5 mg/mL","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"2A x 3 (TB)"}]},{"name":"Nấm miệng","items":[{"name":"Nystatin 250 000 IU","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1 gói x 3 (thoa lưỡi)"}]},{"name":"PCI","items":[{"name":"Lovenox (Enoxaheparin) 60mg/0.6mL","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1A x 2 (TDD) trong 3 ngày"},{"name":"Brillinta (Ticargrelor) 90mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v x 2 (U)"},{"name":"Aspirin 81mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v (U)"},{"name":"Pantoloc (Pantoprazole) 40mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v (U) trước ăn 30 phút"},{"name":"Lipitor (Atorvastatin) 20mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v (U) chiều"}]},{"name":"Phản vệ nặng","items":[{"name":"Adrenaline 1mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"½ A (TB) x 2 mỗi 5 phút"},{"name":"NaCl 0.9% 500ml","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1 chai (TTM) XXX g/ph"},{"name":"Methylprednisolone (Solumedrol) 40mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1 lọ (TMC)"},{"name":"Diphenhydramine (Dimedrol) 10mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"3A (TB)"},{"name":"Adrenaline 1mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1A + NaCl 0.9% đủ 10mL lấy 5mL (TMC)"},{"name":"Adrenaline 1mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"5A + NaCl 0.9% đủ 50mL (BTĐ) 3ml/h Hoặc"},{"name":"Adrenaline 1mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"2A + NaCl 0.9% 500mL (TTM) 30 giọt/phút (0,1 ug/kg/phút)"},{"name":"Diaphyllin 4,8%/5ml","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"2A + NaCl 0.9% 50ml (BTĐ) 3ml/h"}]},{"name":"Phù phổi cấp","items":[{"name":"Glyceryl Trinitrate 10mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"3A + NaCl 0.9% 50mL (BTĐ) 5-10 ml/h"},{"name":"Lasix 20mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"2A (TMC)"}]},{"name":"Pneumocystic Jiroveci","items":[{"name":"HIV (+), sức đề kháng tốt: Methylprednison 40mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1 lọ x 2 (TMC) trước dùng kháng sinh 30 phút, duy trì trong 5 ngày sau đó giảm liều 40mg (TMC) trong 5 ngày"},{"name":"TMP/SMX 960 mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"2v x 3 (U)"},{"name":"Có thể kết hợp thêm: Clindamycin 600mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1 lọ x 4 (TTM)"}]},{"name":"Say tàu xe","items":[{"name":"Vomina (dimehydrinate) 50mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v (U) 30 phút trước khi lên xe"},{"name":"Nautamin (Diphehydramin) 90mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v (U) 30 phút trước khi lên xe"}]},{"name":"Sandostatin","items":[{"name":"Sandostatin 0,1mg/1mL","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"3A + NaCl 0.9% 500ml TTM XXX g/ph trước ERCP 1 giờ"}]},{"name":"Sepsis Cocktail","items":[{"name":"Vitamin B 100mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1A x 2 (TB)"},{"name":"Vitamin C 0,5g","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"3A x 4 (TMC)"},{"name":"Hydrocortisone 100mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"½ A x 4 (TMC)"}]},{"name":"Tăng áp phổi","items":[{"name":"Misenbo 62,5mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v x 2 (U) trong 3 tuần sau đó"},{"name":"CCB liều cao: amlor 10mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1v x 2 (U)"},{"name":"5 PDE inhibitor: Viagra 50mg 1/","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"2v x 3 (U) sau đó 1v x 3 (U)"}]},{"name":"Tranexamic Acid trong chấn thương","items":[{"name":"Tranexamic Acid 250mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"4A + NaCl 0,9% 100mL (TTM) C g/ph"},{"name":"Tranexamic Acid 250mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"4A pha loãng (TMC) mỗi 8 giờ (đúng là truyền 1g mỗi 8 giờ)"}]},{"name":"Tiêu chảy nhiễm trùng","items":[{"name":"Buscopan 20mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1A (TB)"},{"name":"Nexium 40mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1 lọ (TMC)"},{"name":"Primperan (metoclopramide) 10mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1A (TMC)"}]},{"name":"Tràn mủ màng phổi","items":[{"name":"Gentamycin 80mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1 ống + NatriCloride 0.9% 500mL (TTM) liên tục 80mL/h"}]},{"name":"Tụt huyết áp sau đặt NKQ","items":[{"name":"Ringer Fundin 500mL","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1 chai (TTM) C g/ph qua bao áp lực"},{"name":"Phenylephrine 500ug/10mL 1/","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"3 A (TMC)"},{"name":"Noradrenaline 4mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1A + G5% 50mL (TTM) 5ml/h"}]},{"name":"Vitamin K1","items":[{"name":"Vitamin K1 10mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1A (TDD)"}]},{"name":"XHTH do dãn vỡ tĩnh mạch thực quản","items":[{"name":"Sandostatin 0,1mg/1mL","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"½ A (TMC)"},{"name":"Sandostatin 0,1mg/1mL 2","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"5 A + NaCl 0.9% 50mL (BTĐ) 10ml/h (50ug/giờ)"},{"name":"Sau đó: Sandostatin 0,1mg/1mL","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"4A + NaCl 0.9% đủ 40mL (BTĐ) 8ml/h (50ug/giờ)"},{"name":"Ceftriaxone 1g lọ","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"(TMC)"},{"name":"Hoặc Ciprofloxacin 200mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1lọ x 2 (TTM) XXX g/ph"}]},{"name":"XHTH do loét dạ dày tá tràng Forrest IIb trở lên","items":[{"name":"Nexium 40mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"2lọ (TMC)"},{"name":"Nexium 40mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"2 lọ + NaCl 0.9% 50ml (BTĐ) 5ml/h (8mg/h)"}]},{"name":"Xoắn đỉnh","items":[{"name":"Shock 150J x 2, Lidocaine 2% 3ml","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"(TMC) sau đó duy trì:"},{"name":"Lidocaine 2% 50ml (BTĐ) 3ml/h, MgSO4 15%/10ml","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1A (TMC)"}]},{"name":"Xổ giun","items":[{"name":"Zentel (Albendazole) 200 mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"2viên x 2 (U) trong 3 ngày"}]},{"name":"Suy tim cấp","items":[{"name":"Glycerin 10mg/10ml","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"3A + NS 0.9% 50ml SE 1ml/h (10ug/phút)"},{"name":"Dobutamin 250mg","s":"","t":"","c":"","e":"","dunit":"","route":"","days":"","note":"1A + G5% 50ml SE 3ml/h (5ug/kg/phút)"}]}];
+(function(){if(jget('rx_proto_seed',false))return;const have=new Set(protocols.map(p=>(p.name||'').toLowerCase()));PROTO_SEED.forEach((p,i)=>{if(!have.has((p.name||'').toLowerCase())){have.add((p.name||'').toLowerCase());protocols.push({id:'PTS'+i+'_'+Date.now(),name:p.name,items:p.items});}});saveProtocols();jset('rx_proto_seed',true);})();
+function savePatients(){jset(LS_PATIENTS,patients);}
+function saveRxAll(){jset(LS_SAVED,rxAll);}
+
+/* Migrate dữ liệu cũ (nếu có đơn lưu kiểu cũ chưa gắn bệnh nhân) */
+(function migrate(){
+  const old=jget("rx_saved_v1",null);
+  if(Array.isArray(old)&&old.length&&!rxAll.length){
+    old.forEach(rx=>{
+      const pid=findOrCreatePatient(rx);
+      rxAll.push({...rx,patientId:pid,follow:rx.follow||""});
+    });
+    saveRxAll();savePatients();
+  }
+})();
+
+let currentPatientId=null;
+let editingRxId=null;
+
+/* ===== Tiện ích ===== */
+const fmt=n=>(Number(n)||0).toLocaleString("vi-VN")+" đ";
+function esc(s){return String(s==null?"":s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function todayISO(){const d=new Date();return d.toISOString().slice(0,10);}
+function fmtDate(iso){if(!iso)return"";const d=new Date(iso);if(isNaN(d))return iso;return d.toLocaleDateString("vi-VN");}
+function daysFromToday(iso){if(!iso)return null;const d=new Date(iso+"T00:00:00");const t=new Date();t.setHours(0,0,0,0);return Math.round((d-t)/86400000);}
+function pkey(name,year){return (String(name||"").trim().toLowerCase())+"|"+(String(year||"").trim());}
+
+function findOrCreatePatient(rx){
+  const key=pkey(rx.name,rx.year);
+  let p=patients.find(x=>pkey(x.name,x.year)===key);
+  if(!p){p={id:"P"+Date.now()+Math.floor(Math.random()*1000),name:rx.name||"",year:rx.year||"",
+    sex:rx.sex||"Nam",addr:rx.addr||"",phone:rx.phone||"",note:"",nextVisit:""};patients.push(p);}
+  return p.id;
+}
+
+/* ===== Bảng kê toa ===== */
+function buildDrugDatalist(){buildIndex();}
+function unitOptions(sel){return UNITS.map(u=>`<option ${u===sel?'selected':''}>${u}</option>`).join('');}
+
+function addRow(data){
+  data=data||{};
+  const tr=document.createElement('tr');
+  tr.innerHTML=`
+    <td class="idx num" draggable="true" title="Kéo để đổi thứ tự thuốc">⠿ <span class="idxn"></span></td>
+    <td><div class="dwrap" style="position:relative"><textarea class="dname" rows="1" autocomplete="off" placeholder="Tên thuốc..." oninput="onDrugType(this)" onfocus="onDrugType(this)" onblur="dnameBlur(this)" onkeydown="if(event.key==='Enter')event.preventDefault();">${esc(data.name)}</textarea><div class="sug"></div></div></td>
+    <td><div class="dose-grid">
+      <input class="dose" data-d="s" placeholder="S" title="Sáng" value="${esc(data.s)}" oninput="onDose(this)">
+      <input class="dose" data-d="t" placeholder="T" title="Trưa" value="${esc(data.t)}" oninput="onDose(this)">
+      <input class="dose" data-d="c" placeholder="C" title="Chiều" value="${esc(data.c)}" oninput="onDose(this)">
+      <input class="dose" data-d="e" placeholder="Đ" title="Tối" value="${esc(data.e)}" oninput="onDose(this)">
+      <input class="dunit" list="doseUnitList" placeholder="Đơn vị" title="Đơn vị" value="${esc(data.dunit)}">
+    </div>
+    <div class="dn-note"><button type="button" class="note-btn" onclick="toggleNote(this)">✎ Ghi chú</button><input class="drugnote" placeholder="Cách dùng / lời dặn..." value="${esc(data.note)}" style="display:none"></div></td>
+    <td><input class="route" list="routeList" placeholder="uống..." value="${esc(data.route)}"></td>
+    <td><input class="days num" type="number" min="0" placeholder="ngày" value="${data.days!=null?data.days:''}" oninput="onDose(this)" onchange="onDose(this)"></td>
+    <td><input class="qty num" type="number" min="0" placeholder="0" value="${data.qty!=null?data.qty:''}" oninput="onQty(this)" title="Tự tính theo liều × ngày — có thể sửa tay"></td>
+    <td><select class="unit">${unitOptions(data.unit||'Viên')}</select></td>
+    <td class="money"><input class="price-in num auto" type="number" tabindex="-1" readonly value="${data.price!=null?data.price:priceOf(data.name||'')}"></td>
+    <td class="money"><input class="cell-amount num auto" type="text" tabindex="-1" readonly value="0 đ"></td>
+    <td class="no-print"><button class="del-btn" onclick="this.closest('tr').remove();recalc()">×</button></td>`;
+  document.getElementById('rxBody').appendChild(tr);
+  if(data.qty!=null&&String(data.qty)!=='')tr.querySelector('.qty').dataset.manual='1';
+  if(data.note){const _dn=tr.querySelector('.drugnote');if(_dn)_dn.style.display='';}
+  fitText(tr.querySelector('.dname'));
+  autoGrow(tr.querySelector('.dname'));
+  updateInfo(tr);
+  recalc();
+}
+// Tự co chữ cho vừa bề ngang ô (luôn thấy trọn tên thuốc)
+function fitText(el){if(el)el.style.fontSize='13px';}
+function autoGrow(el){if(!el)return;el.style.height='auto';el.style.height=Math.max(el.scrollHeight,34)+'px';}
+function fitAllDrugs(){document.querySelectorAll('#rxBody .dname').forEach(fitText);}
+function infoOf(name){return drugByDisplay(name);}
+function unitFromForm(dbc){const d=(dbc||'').toLowerCase();
+  if(/bút tiêm|bút|pen/.test(d))return 'Bút tiêm';
+  if(/viên|nang|nén|bao|sủi|ngậm|đặt|đạn/.test(d))return 'Viên';
+  if(/gói|cốm|bột/.test(d))return 'Gói';
+  if(/ống/.test(d))return 'Ống';
+  if(/tuýp|kem|mỡ|gel/.test(d))return 'Tuýp';
+  if(/xịt|hít|nhỏ/.test(d))return 'Lọ';
+  if(/chai|siro|sirô|dung dịch|hỗn dịch|tiêm/.test(d))return 'Chai';
+  return '';}
+function updateInfo(tr){
+  const inf=infoOf(tr.querySelector('.dname').value);
+  if(inf&&inf.dbc){const u=unitFromForm(inf.dbc);const sel=tr.querySelector('.unit');if(u&&sel)sel.value=u;}
+  const box=tr.querySelector('.dinfo');if(!box)return;
+  if(!inf||!(inf.dbc||inf.ct)){box.textContent='';return;}
+  box.textContent=(inf.dbc?inf.dbc:'')+(inf.ct?' · '+inf.ct:'');
+}
+function formatName(sel){const v=sel.value.trim();const d=drugs.find(x=>x.name===v);if(d){sel.value=displayName(d);}else{const r=DAV_DB.find(x=>x[0]===v);if(r)sel.value=davDisplay(r);}fitText(sel);try{sel.scrollLeft=0;}catch(e){}updateInfo(sel.closest('tr'));recalc();}
+function onDrugChange(sel){fitText(sel);updateInfo(sel.closest('tr'));recalc();}
+window.addEventListener('resize',fitAllDrugs);
+function onDrugType(el){
+  if(!SUG_KEYS||!SUG_KEYS.length)buildIndex();
+  const tr=el.closest('tr');const box=tr.querySelector('.sug');
+  const q=(el.value||'').trim().toLowerCase();
+  fitText(el);autoGrow(el);updateInfo(tr);recalc();
+  if(!q){box.style.display='none';box.innerHTML='';return;}
+  const hits=[];for(let i=0;i<SUG_KEYS.length&&hits.length<30;i++){if(SUG_KEYS[i].toLowerCase().includes(q))hits.push(SUG_KEYS[i]);}
+  if(!hits.length){box.style.display='none';box.innerHTML='';return;}
+  box._hits=hits;box.innerHTML=hits.map((k,i)=>{const r=DISPLAY_INDEX[k]||{};const sub=[r.dbc,r.ct,(Number(r.price)>0?'💰 '+fmt(r.price):'')].filter(Boolean).join(' · ');return `<div class="sug-item" data-i="${i}" onmousedown="pickSug(event,this)">${esc(k.replace(/\n/g,' '))}${sub?`<span class="sug-sub">${esc(sub)}</span>`:''}</div>`;}).join('');
+  box.style.display='block';
+}
+function pickSug(ev,it){ev.preventDefault();const tr=it.closest('tr');const inp=tr.querySelector('.dname');const box=tr.querySelector('.sug');const i=+it.getAttribute('data-i');inp.value=(box._hits&&box._hits[i])||it.textContent;box.style.display='none';box.innerHTML='';fitText(inp);autoGrow(inp);updateInfo(tr);recalc();}
+function dnameBlur(el){const tr=el.closest('tr');setTimeout(()=>{const b=tr.querySelector('.sug');if(b){b.style.display='none';}},180);}
+// Phân tích liều: hỗ trợ "1", "0.5", "1,5", phân số "1/2"
+function parseDose(v){
+  v=String(v==null?'':v).trim().replace(',','.');if(!v)return 0;
+  if(v.includes('/')){const[a,b]=v.split('/');return (parseFloat(a)||0)/(parseFloat(b)||1);}
+  return parseFloat(v)||0;
+}
+function numShow(n){return Number.isInteger(n)?String(n):(Math.round(n*100)/100).toString();}
+function onDose(el){const q=el.closest('tr').querySelector('.qty');if(q)q.dataset.manual='';recalc();}
+function onQty(el){el.dataset.manual='1';recalc();}
+function toggleNote(btn){const inp=btn.parentNode.querySelector('.drugnote');const show=inp.style.display==='none';inp.style.display=show?'':'none';btn.textContent=show?'✎ Ẩn ghi chú':'✎ Ghi chú';if(show)inp.focus();}
+function recalc(){
+  let total=0;
+  document.querySelectorAll('#rxBody tr').forEach((tr,i)=>{
+    const _ix=tr.querySelector('.idxn');if(_ix)_ix.textContent=i+1;
+    const sumDose=parseDose(tr.querySelector('[data-d=s]').value)+parseDose(tr.querySelector('[data-d=t]').value)
+      +parseDose(tr.querySelector('[data-d=c]').value)+parseDose(tr.querySelector('[data-d=e]').value);
+    const days=Number(tr.querySelector('.days').value)||0;
+    const qEl=tr.querySelector('.qty');
+    const auto=sumDose*days;
+    if(qEl.dataset.manual!=='1')qEl.value=auto?numShow(auto):'';
+    const qty=Number(qEl.value)||0;
+    const price=priceOf(tr.querySelector('.dname').value);
+    tr.querySelector('.price-in').value=price||'';
+    const amt=qty*price;
+    tr.querySelector('.cell-amount').value=fmt(amt);total+=amt;
+  });
+  document.getElementById('grandTotal').textContent=fmt(total);
+}
+
+/* ===== Form helpers ===== */
+const $=id=>document.getElementById(id);
+function setDate(){const d=new Date();$('dDay').textContent=d.getDate();$('dMonth').textContent=d.getMonth()+1;$('dYear').textContent=d.getFullYear();}
+function showBanner(){
+  const b=$('ptBanner');
+  if(!currentPatientId){b.classList.remove('show');return;}
+  const p=patients.find(x=>x.id===currentPatientId);if(!p){b.classList.remove('show');return;}
+  const cnt=rxAll.filter(r=>r.patientId===currentPatientId).length;
+  $('bannerName').textContent=p.name+(p.year?' ('+p.year+')':'');
+  $('bannerMeta').textContent=' — '+cnt+' lần khám đã lưu';
+  b.classList.add('show');
+}
+function fillForm(p){
+  $('ptName').value=p.name||'';$('ptYear').value=p.year||'';$('ptSex').value=p.sex||'Nam';
+  $('ptAddr').value=p.addr||'';$('ptPhone').value=p.phone||'';
+}
+
+function newRx(keepPatient){
+  editingRxId=null;
+  if(!keepPatient){currentPatientId=null;
+    ['ptName','ptYear','ptAddr','ptPhone'].forEach(id=>$(id).value='');$('ptSex').value='Nam';}
+  $('ptDx').value='';$('rxNote').value='';$('rxFollow').value='';curAtt=[];renderAtt();
+  $('rxBody').innerHTML='';addRow();addRow();
+  setDate();recalc();showBanner();
+  toast(keepPatient?'Đơn mới cho bệnh nhân':'Đã tạo đơn mới');
+}
+
+/* ===== Đính kèm kết quả xét nghiệm (IndexedDB) ===== */
+let curAtt=[];
+let _attDB;
+function attDB(){return new Promise((res,rej)=>{if(_attDB)return res(_attDB);if(!window.indexedDB)return rej('noidb');const r=indexedDB.open('rx_att',2);r.onupgradeneeded=()=>{const db=r.result;if(!db.objectStoreNames.contains('files'))db.createObjectStore('files',{keyPath:'id'});if(!db.objectStoreNames.contains('approach'))db.createObjectStore('approach',{keyPath:'id'});};r.onsuccess=()=>{_attDB=r.result;res(_attDB);};r.onerror=()=>rej(r.error);});}
+function idbPut(id,files){return attDB().then(db=>new Promise((res,rej)=>{const tx=db.transaction('files','readwrite');tx.objectStore('files').put({id,files});tx.oncomplete=res;tx.onerror=()=>rej(tx.error);}));}
+function idbGet(id){return attDB().then(db=>new Promise(res=>{const tx=db.transaction('files','readonly');const rq=tx.objectStore('files').get(id);rq.onsuccess=()=>res(rq.result?rq.result.files:[]);rq.onerror=()=>res([]);})).catch(()=>[]);}
+function idbDel(id){return attDB().then(db=>new Promise(res=>{const tx=db.transaction('files','readwrite');tx.objectStore('files').delete(id);tx.oncomplete=res;tx.onerror=res;})).catch(()=>{});}
+function onAttPick(inp){[...inp.files].forEach(f=>{const r=new FileReader();r.onload=()=>{curAtt.push({name:f.name,type:f.type||'',data:r.result});renderAtt();};r.readAsDataURL(f);});inp.value='';}
+function renderAtt(){const box=$('attList');if(!box)return;box.innerHTML=curAtt.map((a,i)=>{const isImg=(a.type||'').startsWith('image/');const thumb=isImg?`<img src="${a.data}" class="att-thumb">`:`<div class="att-thumb">📄 PDF</div>`;return `<div class="att-item"><a href="#" onclick="openAtt(${i});return false;" title="Xem">${thumb}</a><div class="att-name" title="${esc(a.name)}">${esc(a.name)}</div><button class="att-del" onclick="delAtt(${i})" title="Xóa">×</button></div>`;}).join('');}
+function openAtt(i){const a=curAtt[i];if(!a)return;try{const arr=a.data.split(',');const mime=(arr[0].match(/:(.*?);/)||[])[1]||a.type||'application/octet-stream';const bin=atob(arr[1]);const u8=new Uint8Array(bin.length);for(let j=0;j<bin.length;j++)u8[j]=bin.charCodeAt(j);const url=URL.createObjectURL(new Blob([u8],{type:mime}));window.open(url,'_blank');}catch(e){const w=window.open();if(w)w.location=a.data;}}
+function delAtt(i){curAtt.splice(i,1);renderAtt();}
+function idbAll(){return attDB().then(db=>new Promise(res=>{const tx=db.transaction('files','readonly');const rq=tx.objectStore('files').getAll();rq.onsuccess=()=>res(rq.result||[]);rq.onerror=()=>res([]);})).catch(()=>[]);}
+function exportData(){Promise.all([idbAll(),apAll()]).then(([att,_ap])=>{const data={app:'toa-thuoc',v:1,date:new Date().toISOString(),drugs:jget(LS_DRUGS,[]),patients:jget(LS_PATIENTS,[]),rx:jget(LS_SAVED,[]),att:att,protocols:protocols,approach:_ap,ap_topics:jget(LS_APTOP,[])};const blob=new Blob([JSON.stringify(data)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='Sao luu toa thuoc '+todayISO()+'.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},800);toast('Đã xuất file sao lưu (gồm cả file xét nghiệm)');});}
+function importData(inp){const f=inp.files[0];if(!f)return;if(!confirm('Nhập dữ liệu từ file sao lưu? Toàn bộ dữ liệu hiện tại trên máy này sẽ bị thay thế.')){inp.value='';return;}const r=new FileReader();r.onload=async()=>{try{const d=JSON.parse(r.result);if(d.app!=='toa-thuoc')throw 0;if(d.drugs)jset(LS_DRUGS,d.drugs);if(d.patients)jset(LS_PATIENTS,d.patients);if(d.rx)jset(LS_SAVED,d.rx);jset('rx_dav_merged',true);jset('rx_dav_cleaned',true);jset('rx_add_gocong',true);if(Array.isArray(d.att)){for(const a of d.att){try{await idbPut(a.id,a.files);}catch(e){}}}if(Array.isArray(d.protocols))jset('rx_protocols_v1',d.protocols);if(Array.isArray(d.approach)){for(const a of d.approach){try{await apPut(a);}catch(e){}}}if(Array.isArray(d.ap_topics))jset('rx_ap_topics_v1',d.ap_topics);alert('Đã nhập xong dữ liệu. Trang sẽ tải lại.');location.reload();}catch(e){alert('File sao lưu không hợp lệ.');}};r.readAsText(f);inp.value='';}
+
+/* ===== Lưu đơn ===== */
+function collectRx(){
+  const items=[...document.querySelectorAll('#rxBody tr')].map(tr=>({
+    name:tr.querySelector('.dname').value,
+    s:tr.querySelector('[data-d=s]').value,t:tr.querySelector('[data-d=t]').value,
+    c:tr.querySelector('[data-d=c]').value,e:tr.querySelector('[data-d=e]').value,
+    dunit:tr.querySelector('.dunit').value,
+    note:tr.querySelector('.drugnote')?tr.querySelector('.drugnote').value:'',
+    route:tr.querySelector('.route').value,
+    days:tr.querySelector('.days').value,
+    qty:tr.querySelector('.qty').value,unit:tr.querySelector('.unit').value,
+    price:tr.querySelector('.price-in').value
+  })).filter(x=>x.name);
+  return {name:$('ptName').value.trim(),year:$('ptYear').value.trim(),sex:$('ptSex').value,
+    addr:$('ptAddr').value.trim(),phone:$('ptPhone').value.trim(),dx:$('ptDx').value.trim(),
+    note:$('rxNote').value,doc:$('docName').value,follow:$('rxFollow').value,
+    items,date:new Date().toISOString()};
+}
+function saveRx(){
+  const rx=collectRx();
+  if(!rx.name){toast('⚠️ Nhập tên bệnh nhân trước khi lưu');return;}
+  if(!rx.items.length){toast('⚠️ Chưa có thuốc nào trong đơn');return;}
+  // gắn bệnh nhân
+  let pid=currentPatientId;
+  const p0=patients.find(x=>x.id===pid);
+  if(!p0||pkey(p0.name,p0.year)!==pkey(rx.name,rx.year)) pid=findOrCreatePatient(rx);
+  currentPatientId=pid;
+  const p=patients.find(x=>x.id===pid);
+  // cập nhật thông tin hành chính mới nhất
+  p.sex=rx.sex;if(rx.addr)p.addr=rx.addr;if(rx.phone)p.phone=rx.phone;
+  if(rx.follow)p.nextVisit=rx.follow;
+  rx.patientId=pid;rx.attN=curAtt.length;
+  const eidx=editingRxId?rxAll.findIndex(r=>r.id===editingRxId):-1;
+  if(eidx>=0){
+    rx.id=editingRxId;rx.date=rxAll[eidx].date;rxAll[eidx]=rx;
+    idbPut(rx.id,curAtt.slice()).catch(()=>{});
+    saveRxAll();savePatients();showBanner();
+    toast('💾 Đã cập nhật toa (ngày '+fmtDate(rx.date)+') của '+rx.name);
+    return;
+  }
+  rx.id="R"+Date.now();editingRxId=rx.id;
+  idbPut(rx.id,curAtt.slice()).catch(()=>{});
+  rxAll.unshift(rx);
+  saveRxAll();savePatients();
+  showBanner();
+  toast('💾 Đã lưu TOA MỚI cho '+rx.name+(rx.follow?' · hẹn tái khám '+fmtDate(rx.follow):''));
+}
+
+/* ===== Danh mục thuốc ===== */
+const LS_APTOP='rx_ap_topics_v1';
+let _apList=[],_apTopics=[],_apView=null;
+function loadApTopics(){_apTopics=jget(LS_APTOP,[]);}
+function saveApTopics(){jset(LS_APTOP,_apTopics);}
+function apPut(rec){return attDB().then(db=>new Promise((res,rej)=>{const tx=db.transaction('approach','readwrite');tx.objectStore('approach').put(rec);tx.oncomplete=res;tx.onerror=()=>rej(tx.error);}));}
+function apAll(){return attDB().then(db=>new Promise(r2=>{const tx=db.transaction('approach','readonly');const rq=tx.objectStore('approach').getAll();rq.onsuccess=()=>r2(rq.result||[]);rq.onerror=()=>r2([]);})).catch(()=>[]);}
+function apDelDb(id){return attDB().then(db=>new Promise(r2=>{const tx=db.transaction('approach','readwrite');tx.objectStore('approach').delete(id);tx.oncomplete=r2;tx.onerror=r2;})).catch(()=>{});}
+function openApproach(){show('approachOverlay');loadApTopics();apAll().then(l=>{_apList=l;_apView=null;apRenderTopics('');});}
+function apTopicCard(id,name,n,uncat){return `<div class="ap-topic" onclick="apOpenTopic('${id}')"><button class="att-del" onclick="event.stopPropagation();apDelTopic('${id}')" title="Xóa mục" ${uncat?'style="display:none"':''}>×</button><button class="ap-edit" onclick="event.stopPropagation();apRenameTopic('${id}')" title="Đổi tên mục" ${uncat?'style="display:none"':''}>✏️</button><div class="ap-topic-ic">📁</div><div class="ap-topic-nm">${esc(name)}</div><div class="ap-topic-ct">${n} hình</div></div>`;}
+function apTopicsHTML(q){q=(q||'').toLowerCase().trim();const counts={};_apList.forEach(a=>{const k=a.topicId||'';counts[k]=(counts[k]||0)+1;});let cards=_apTopics.filter(t=>!q||(t.name||'').toLowerCase().includes(q)).map(t=>apTopicCard(t.id,t.name,counts[t.id]||0));if((counts['']||0)>0&&(!q||'chưa phân loại'.includes(q)))cards.push(apTopicCard('','Chưa phân loại',counts[''],true));return cards.join('')||'<p style="color:#7a8aa0">Không tìm thấy mục nào.</p>';}
+function apRenderTopics(q){_apView=null;q=q||'';const body=$('apBody');body.innerHTML=`<h3>📚 Sơ đồ phác đồ chẩn đoán & điều trị</h3><button class="att-add" onclick="apAddTopic()">➕ Thêm mục</button><input id="apTopSearch" class="search-in" style="margin-top:10px" placeholder="🔍 Tìm mục..." value="${esc(q)}" oninput="apFilterTopics(this.value)"><div class="ap-grid" id="apGrid">${_apTopics.length||_apList.length?apTopicsHTML(q):'<p style=\'color:#7a8aa0\'>Chưa có mục nào. Bấm "➕ Thêm mục" để tạo (vd: Chóng mặt, Tăng huyết áp...).</p>'}</div>`;}
+function apFilterTopics(q){const g=$('apGrid');if(g)g.innerHTML=apTopicsHTML(q);}
+function apOpenTopic(id){_apView=id;apRenderImgs('');}
+function apImgCard(a){return `<div class="att-item" style="width:150px"><a href="#" onclick="apView('${a.id}');return false;" title="Xem"><img src="${a.data}" class="att-thumb" style="width:136px;height:110px"></a><div class="att-name" title="${esc(a.title)}">${esc(a.title)}</div><button class="att-del" onclick="apDel('${a.id}')" title="Xóa">×</button><button class="ap-edit" onclick="apRenameImg('${a.id}')" title="Đổi tên">✏️</button></div>`;}
+function apImgsHTML(q){q=(q||'').toLowerCase().trim();const tid=_apView||'';const imgs=_apList.filter(a=>(a.topicId||'')===tid).filter(a=>!q||(a.title||'').toLowerCase().includes(q));return imgs.map(a=>apImgCard(a)).join('')||'<p style="color:#7a8aa0">'+(q?'Không tìm thấy hình.':'Chưa có hình. Bấm "🖼️ Thêm hình vào mục này".')+'</p>';}
+function apRenderImgs(q){q=q||'';const tid=_apView||'';const tname=tid?(((_apTopics.find(t=>t.id===tid)||{}).name)||'Mục'):'Chưa phân loại';const body=$('apBody');body.innerHTML=`<button class="btn-sm" onclick="apRenderTopics('')">← Quay lại các mục</button><h3 style="margin-top:8px">📁 ${esc(tname)}</h3>${tid?`<label for="apInput" class="att-add">🖼️ Thêm hình vào mục này</label><input type="file" id="apInput" accept="image/*" multiple style="display:none" onchange="apAdd(this)">`:''}<input id="apImgSearch" class="search-in" style="margin-top:10px" placeholder="🔍 Tìm hình..." value="${esc(q)}" oninput="apFilterImgs(this.value)"><div class="att-list" id="apImgList" style="margin-top:4px">${apImgsHTML(q)}</div>`;}
+function apFilterImgs(q){const g=$('apImgList');if(g)g.innerHTML=apImgsHTML(q);}
+function apAddTopic(){const n=(prompt('Tên mục (vd: Chóng mặt, Tăng huyết áp, Đau bụng...):','')||'').trim();if(!n)return;_apTopics.push({id:'T'+Date.now(),name:n});saveApTopics();apRenderTopics('');}
+function apDelTopic(id){const t=_apTopics.find(x=>x.id===id);if(!t)return;const dels=_apList.filter(a=>(a.topicId||'')===id);if(!confirm('Xóa mục "'+t.name+'"'+(dels.length?' và '+dels.length+' hình bên trong':'')+'?\nKhông thể hoàn tác.'))return;Promise.all(dels.map(a=>apDelDb(a.id))).then(()=>{_apList=_apList.filter(a=>(a.topicId||'')!==id);_apTopics=_apTopics.filter(x=>x.id!==id);saveApTopics();apRenderTopics('');});}
+function apRenameTopic(id){const t=_apTopics.find(x=>x.id===id);if(!t)return;const n=(prompt('Đổi tên mục:',t.name)||'').trim();if(!n||n===t.name)return;t.name=n;saveApTopics();apRenderTopics('');}
+function apRenameImg(id){const a=_apList.find(x=>x.id===id);if(!a)return;const n=(prompt('Đổi tên hình:',a.title)||'').trim();if(!n||n===a.title)return;a.title=n;apPut(a).then(()=>apRenderImgs(''));}
+function apAdd(inp){const files=[...inp.files];inp.value='';const tid=_apView||'';(function next(i){if(i>=files.length){apAll().then(l=>{_apList=l;apRenderImgs('');});return;}const f=files[i];const r=new FileReader();r.onload=()=>{const t=(prompt('Tên hình (vd: Sơ đồ chẩn đoán, Phác đồ điều trị...):',f.name.replace(/\.[^.]+$/,''))||'').trim()||f.name;apPut({id:'AP'+Date.now()+'_'+i,topicId:tid,title:t,type:f.type||'',data:r.result}).then(()=>next(i+1));};r.readAsDataURL(f);})(0);}
+function apView(id){const a=_apList.find(x=>x.id===id);if(!a)return;try{const arr=a.data.split(',');const mime=(arr[0].match(/:(.*?);/)||[])[1]||a.type||'image/*';const bin=atob(arr[1]);const u8=new Uint8Array(bin.length);for(let j=0;j<bin.length;j++)u8[j]=bin.charCodeAt(j);window.open(URL.createObjectURL(new Blob([u8],{type:mime})),'_blank');}catch(e){const w=window.open();if(w)w.location=a.data;}}
+function apDel(id){const a=_apList.find(x=>x.id===id);if(a&&confirm('Xóa hình "'+a.title+'"?')){apDelDb(id).then(()=>{_apList=_apList.filter(x=>x.id!==id);apRenderImgs('');});}}
+function openProto(){renderProto();show('protoOverlay');}
+function renderProto(q){
+  q=(q||'').toLowerCase().trim();
+  const box=$('protoList');
+  const list=protocols.filter(p=>!q||(p.name||'').toLowerCase().includes(q)||(p.items||[]).some(it=>(it.name||'').toLowerCase().includes(q))).sort((a,b)=>(a.name||'').localeCompare(b.name||'','vi'));
+  box.innerHTML=list.length?list.map(p=>`<div class="rx-hist"><div class="head"><div style="flex:1;min-width:0"><b>${esc(p.name)}</b> <span class="meta">· ${(p.items||[]).length} thuốc</span><div class="drugs">💊 ${esc((p.items||[]).map(it=>(it.name||'').replace(/\n/g,' ')).join(', '))}</div></div><div style="flex:none;white-space:nowrap"><button class="btn-sm btn-open" onclick="applyProto('${p.id}')">Áp dụng</button> <button class="btn-sm btn-del" onclick="delProto('${p.id}')">Xóa</button></div></div></div>`).join(''):(protocols.length?'<p style="color:#7a8aa0">Không tìm thấy phác đồ phù hợp.</p>':'<p style="color:#7a8aa0">Chưa có phác đồ nào. Gõ toa rồi bấm "Lưu toa hiện tại thành phác đồ".</p>');
+}
+function saveProtoFromForm(){
+  const items=collectRx().items;
+  if(!items.length){toast('⚠️ Toa chưa có thuốc để lưu');return;}
+  const name=(prompt('Tên phác đồ (vd: Chóng mặt, Viêm dạ dày...):','')||'').trim();
+  if(!name)return;
+  protocols.push({id:'PT'+Date.now(),name,items});saveProtocols();renderProto();toast('Đã lưu phác đồ: '+name);
+}
+function applyProto(id){
+  const p=protocols.find(x=>x.id===id);if(!p)return;
+  (p.items||[]).forEach(it=>addRow(it));
+  document.querySelectorAll('#rxBody tr').forEach(tr=>{if(!tr.querySelector('.dname').value.trim())tr.remove();});
+  if(!document.querySelector('#rxBody tr'))addRow();
+  recalc();closeModal('protoOverlay');toast('Đã áp phác đồ: '+p.name);
+}
+function delProto(id){const p=protocols.find(x=>x.id===id);if(p&&confirm('Xóa phác đồ "'+p.name+'"?')){protocols=protocols.filter(x=>x.id!==id);saveProtocols();renderProto();}}
+let _statMonth=null;
+function ymOf(iso){return (iso||'').slice(0,7);}
+function dayOf(iso){const d=new Date(iso);return isNaN(d)?0:d.getDate();}
+function firstVisitMap(){const m={};rxAll.forEach(r=>{const k=r.patientId||('n:'+(r.name||''));const d=(r.date||'');if(!m[k]||d<m[k])m[k]=d;});return m;}
+function rxMoney(r){return (r.items||[]).reduce((s,it)=>s+(Number(it.qty)||0)*(Number(it.price)||0),0);}
+function monthTotals(ym){const fv=firstVisitMap();let visits=0,neu=0,re=0,money=0;const pts=new Set();rxAll.forEach(r=>{if(ymOf(r.date)!==ym)return;visits++;money+=rxMoney(r);pts.add(r.patientId||('n:'+(r.name||'')));const k=r.patientId||('n:'+(r.name||''));if((r.date||'')===fv[k])neu++;else re++;});return {visits,neu,re,money,pts:pts.size};}
+function openStats(){if(!_statMonth)_statMonth=todayISO().slice(0,7);show('statsOverlay');renderStats();}
+function statShiftMonth(d){const[y,m]=_statMonth.split('-').map(Number);const dt=new Date(y,m-1+d,1);_statMonth=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0');renderStats();}
+function svgStacked(days,neu,re){const W=1040,H=230,pad=28,bw=Math.max(6,(W-2*pad)/days.length-4);let max=1;for(let i=0;i<days.length;i++)max=Math.max(max,neu[i]+re[i]);const sy=(H-2*pad)/max;let bars='',axis='';for(let i=0;i<days.length;i++){const x=pad+i*((W-2*pad)/days.length)+2;const hR=re[i]*sy,hN=neu[i]*sy;const yR=H-pad-hR,yN=yR-hN;if(re[i])bars+=`<rect x="${x.toFixed(1)}" y="${yR.toFixed(1)}" width="${bw.toFixed(1)}" height="${hR.toFixed(1)}" fill="#42a5f5"><title>Ngày ${days[i]}: tái khám ${re[i]}</title></rect>`;if(neu[i])bars+=`<rect x="${x.toFixed(1)}" y="${yN.toFixed(1)}" width="${bw.toFixed(1)}" height="${hN.toFixed(1)}" fill="#1b5e20"><title>Ngày ${days[i]}: mới ${neu[i]}</title></rect>`;const tot=neu[i]+re[i];if(tot)bars+=`<text x="${(x+bw/2).toFixed(1)}" y="${(yN-3).toFixed(1)}" font-size="9" text-anchor="middle" fill="#333">${tot}</text>`;if(i%2===0)axis+=`<text x="${(x+bw/2).toFixed(1)}" y="${H-pad+13}" font-size="9" text-anchor="middle" fill="#7a8aa0">${days[i]}</text>`;}return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;border:1px solid var(--line);border-radius:8px;background:#fff"><line x1="${pad}" y1="${H-pad}" x2="${W-pad}" y2="${H-pad}" stroke="#cfd8e3"/>${bars}${axis}</svg>`;}
+function svgTrend(labels,vals){const W=1040,H=200,pad=30,gap=(W-2*pad)/labels.length,bw=Math.min(52,gap-10);let max=1;vals.forEach(v=>max=Math.max(max,v));const sy=(H-2*pad)/max;let bars='';for(let i=0;i<labels.length;i++){const x=pad+i*gap+(gap-bw)/2;const h=vals[i]*sy,y=H-pad-h;bars+=`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="3" fill="#1976d2"><title>${labels[i]}: ${vals[i]} lượt</title></rect>`;if(vals[i])bars+=`<text x="${(x+bw/2).toFixed(1)}" y="${(y-4).toFixed(1)}" font-size="11" text-anchor="middle" fill="#333">${vals[i]}</text>`;bars+=`<text x="${(x+bw/2).toFixed(1)}" y="${H-pad+14}" font-size="10" text-anchor="middle" fill="#7a8aa0">${labels[i]}</text>`;}return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;border:1px solid var(--line);border-radius:8px;background:#fff"><line x1="${pad}" y1="${H-pad}" x2="${W-pad}" y2="${H-pad}" stroke="#cfd8e3"/>${bars}</svg>`;}
+function hbars(rows,color){const max=Math.max(1,...rows.map(r=>r[1]));return rows.map(r=>`<div class="st-bar"><span class="nm" title="${esc(r[0])}">${esc(r[0])}</span><span class="track"><span class="fill" style="width:${(r[1]/max*100).toFixed(1)}%;background:${color||'#1976d2'}"></span></span><span class="n">${r[2]||r[1]}</span></div>`).join('')||'<p style="color:#7a8aa0;font-size:13px">Không có dữ liệu.</p>';}
+function renderStats(){
+  const ym=_statMonth,[Y,M]=ym.split('-').map(Number);
+  const D=new Date(Y,M,0).getDate();
+  const days=[],neu=Array(D).fill(0),re=Array(D).fill(0);
+  for(let i=1;i<=D;i++)days.push(i);
+  const fv=firstVisitMap();
+  const inM=rxAll.filter(r=>ymOf(r.date)===ym);
+  inM.forEach(r=>{const d=dayOf(r.date);if(d<1||d>D)return;const k=r.patientId||('n:'+(r.name||''));if((r.date||'')===fv[k])neu[d-1]++;else re[d-1]++;});
+  const cur=monthTotals(ym);
+  const pdt=new Date(Y,M-2,1);const pym=pdt.getFullYear()+'-'+String(pdt.getMonth()+1).padStart(2,'0');const prev=monthTotals(pym);
+  const delta=(a,b)=>{if(!b)return a?`<span class="st-up">＋${a}</span>`:'—';const p=Math.round((a-b)/b*100);return p===0?'±0%':(p>0?`<span class="st-up">▲ ${p}%</span>`:`<span class="st-down">▼ ${Math.abs(p)}%</span>`);};
+  // 12-month trend
+  const tl=[],tv=[];for(let i=11;i>=0;i--){const dt=new Date(Y,M-1-i,1);const k=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0');tl.push(String(dt.getMonth()+1)+'/'+String(dt.getFullYear()).slice(2));tv.push(monthTotals(k).visits);}
+  // distributions (month)
+  const nowY=new Date().getFullYear();
+  const pmap={};patients.forEach(p=>pmap[p.id]=p);
+  let male=0,female=0;const ageB={'0–15':0,'16–30':0,'31–45':0,'46–60':0,'>60':0};const seenPt=new Set();
+  const dxC={},drC={};
+  inM.forEach(r=>{const p=pmap[r.patientId]||{};const sx=(r.sex||p.sex||'');const key=r.patientId||('n:'+(r.name||''));
+    if(!seenPt.has(key)){seenPt.add(key);if(/nữ/i.test(sx))female++;else if(/nam/i.test(sx))male++;const yb=Number(r.year||p.year);if(yb>1900){const a=nowY-yb;if(a<=15)ageB['0–15']++;else if(a<=30)ageB['16–30']++;else if(a<=45)ageB['31–45']++;else if(a<=60)ageB['46–60']++;else ageB['>60']++;}}
+    const dx=(r.dx||'').trim();if(dx)dxC[dx]=(dxC[dx]||0)+1;
+    (r.items||[]).forEach(it=>{const nm=(it.name||'').split('\n')[0].trim();if(nm)drC[nm]=(drC[nm]||0)+1;});
+  });
+  const topDx=Object.entries(dxC).sort((a,b)=>b[1]-a[1]).slice(0,8).map(e=>[e[0],e[1]]);
+  const topDr=Object.entries(drC).sort((a,b)=>b[1]-a[1]).slice(0,8).map(e=>[e[0],e[1]]);
+  const genRows=[['Nam',male],['Nữ',female]];
+  const ageRows=Object.entries(ageB).map(e=>[e[0],e[1]]);
+  // busiest day
+  let bday=0,bmax=0;for(let i=0;i<D;i++){const t=neu[i]+re[i];if(t>bmax){bmax=t;bday=i+1;}}
+  // upcoming follow-ups (global)
+  const today=todayISO();const soon=today;const in14=new Date();in14.setDate(in14.getDate()+14);const in14s=in14.toISOString().slice(0,10);
+  let followSoon=0;const followList=[];rxAll.forEach(r=>{const f=(r.follow||'').slice(0,10);if(f&&f>=today&&f<=in14s){followSoon++;followList.push([r.name||'(?)',f]);}});
+  followList.sort((a,b)=>a[1].localeCompare(b[1]));
+  const body=$('statsBody');
+  body.innerHTML=`<h3>📊 Thống kê phòng khám</h3>
+  <div class="st-nav"><button onclick="statShiftMonth(-1)">‹</button><span class="mlabel">Tháng ${M}/${Y}</span><button onclick="statShiftMonth(1)">›</button>
+    <button onclick="_statMonth=todayISO().slice(0,7);renderStats()" style="font-size:13px">Tháng này</button></div>
+  <div class="st-kpis">
+    <div class="st-kpi"><div class="v">${cur.visits}</div><div class="l">Tổng lượt khám</div><div class="d">${delta(cur.visits,prev.visits)} vs tháng trước</div></div>
+    <div class="st-kpi"><div class="v" style="color:#1b5e20">${cur.neu}</div><div class="l">Ca mới</div><div class="d">${delta(cur.neu,prev.neu)}</div></div>
+    <div class="st-kpi"><div class="v" style="color:#1565c0">${cur.re}</div><div class="l">Tái khám (ca cũ)</div><div class="d">${delta(cur.re,prev.re)}</div></div>
+    <div class="st-kpi"><div class="v">${cur.pts}</div><div class="l">Số bệnh nhân</div></div>
+    <div class="st-kpi"><div class="v" style="font-size:19px">${fmt(cur.money)}</div><div class="l">Tổng tiền thuốc kê</div><div class="d">${delta(Math.round(cur.money),Math.round(prev.money))}</div></div>
+  </div>
+  <div class="st-sec"><h4>Số ca mỗi ngày trong tháng ${M}/${Y}</h4>
+    <p class="st-legend"><i style="background:#1b5e20"></i>Ca mới <i style="background:#42a5f5"></i>Tái khám</p>
+    ${svgStacked(days,neu,re)}
+    <p style="font-size:12px;color:#5a6b80;margin-top:4px">${bmax?('Ngày đông nhất: '+bday+'/'+M+' với '+bmax+' lượt.'):'Chưa có lượt khám nào trong tháng.'}</p></div>
+  <div class="st-sec"><h4>Xu hướng 12 tháng (tổng lượt khám)</h4>${svgTrend(tl,tv)}</div>
+  <div class="st-sec st-grid2">
+    <div><h4>Giới tính (bệnh nhân trong tháng)</h4>${hbars(genRows,'#7b1fa2')}</div>
+    <div><h4>Nhóm tuổi</h4>${hbars(ageRows,'#00838f')}</div>
+  </div>
+  <div class="st-sec st-grid2">
+    <div><h4>Top chẩn đoán</h4>${hbars(topDx,'#1976d2')}</div>
+    <div><h4>Top thuốc kê nhiều</h4>${hbars(topDr,'#ef6c00')}</div>
+  </div>
+  <div class="st-sec"><h4>Hẹn tái khám trong 14 ngày tới: ${followSoon}</h4>
+    ${followList.length?('<div style="font-size:13px;color:#333">'+followList.slice(0,20).map(x=>`• ${esc(x[0])} — ${x[1].split('-').reverse().join('/')}`).join('<br>')+(followList.length>20?'<br>…':'')+'</div>'):'<p style="color:#7a8aa0;font-size:13px">Không có lịch hẹn nào sắp tới.</p>'}</div>`;
+}
+function openDrugMgr(){renderDrugList();show('drugOverlay');}
+function renderDrugList(){
+  const q=($('drugSearch').value||'').toLowerCase().trim();
+  let rows=[];
+  for(let i=0;i<drugs.length;i++){const d=drugs[i];
+    if(q&&!(d.name.toLowerCase().includes(q)||(d.hc||'').toLowerCase().includes(q)))continue;
+    rows.push([i,d]);
+  }
+  rows.sort((a,b)=>(a[1].name||'').localeCompare(b[1].name||'','vi'));
+  const total=rows.length, cap=150, show=rows.slice(0,cap);
+  $('drugMgrBody').innerHTML=show.map(([i,d])=>`<tr>
+      <td><input value="${esc(d.name)}" onchange="editDrug(${i},'name',this.value)"></td>
+      <td><input value="${esc(d.hc)}" onchange="editDrug(${i},'hc',this.value)"></td>
+      <td><input value="${esc(d.ham)}" onchange="editDrug(${i},'ham',this.value)"></td>
+      <td><input value="${esc(d.dbc)}" onchange="editDrug(${i},'dbc',this.value)"></td>
+      <td><input value="${esc(d.ct)}" onchange="editDrug(${i},'ct',this.value)"></td>
+      <td><input type="number" class="num" value="${d.price}" onchange="editDrug(${i},'price',this.value)"></td>
+      <td><button class="mini-del" onclick="delDrug(${i})">×</button></td></tr>`).join('')
+    +(total>cap?`<tr><td colspan="7" style="text-align:center;color:#5a6b80;padding:10px">Đang hiện ${cap}/${total} thuốc (sắp xếp A→Z) — gõ ô tìm phía trên để lọc nhanh.</td></tr>`:'');
+}
+function editDrug(i,k,v){drugs[i][k]=k==='price'?(Number(v)||0):v.trim();saveDrugs();refreshRowSelects();}
+function addDrug(){
+  const nm=$('newDrugName').value.trim();const pr=Number($('newDrugPrice').value)||0;
+  if(!nm){toast('Nhập tên thuốc');return;}
+  if(drugs.some(d=>d.name===nm)){toast('Thuốc đã có');return;}
+  const i=DRUG_INFO[nm]||[];
+  drugs.push({name:nm,price:pr,
+    hc:$('newDrugHC').value.trim()||i[0]||'',
+    ham:$('newDrugHam').value.trim()||i[1]||'',
+    dbc:$('newDrugDbc').value.trim()||i[2]||'',
+    ct:$('newDrugCt').value.trim()||i[3]||''});saveDrugs();
+  ['newDrugName','newDrugHC','newDrugHam','newDrugDbc','newDrugCt','newDrugPrice'].forEach(id=>$(id).value='');
+  renderDrugList();refreshRowSelects();toast('Đã thêm thuốc');
+}
+function delDrug(i){if(confirm('Xóa "'+drugs[i].name+'"?')){drugs.splice(i,1);saveDrugs();renderDrugList();refreshRowSelects();}}
+function refreshRowSelects(){buildDrugDatalist();document.querySelectorAll('#rxBody tr').forEach(updateInfo);recalc();}
+
+/* ===== Bệnh nhân ===== */
+function visitInfo(pid){
+  const rxs=rxAll.filter(r=>r.patientId===pid).sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const last=rxs[0]?rxs[0].date:null;
+  // ngày tái khám = follow gần nhất (đơn mới nhất có follow)
+  let next="";for(const r of rxs){if(r.follow){next=r.follow;break;}}
+  return {count:rxs.length,last,next,rxs};
+}
+function recallBadge(iso){
+  if(!iso)return '<span class="badge none">—</span>';
+  const d=daysFromToday(iso);
+  if(d<0)return `<span class="badge over">Quá hạn ${-d} ngày</span>`;
+  if(d===0)return '<span class="badge today">Hôm nay</span>';
+  if(d<=7)return `<span class="badge soon">${d} ngày nữa</span>`;
+  return `<span class="badge future">${fmtDate(iso)}</span>`;
+}
+
+function openPatients(){renderPatientList();show('ptOverlay');}
+function renderPatientList(filter){
+  const q=(filter||'').toLowerCase();
+  const rows=patients.map(p=>({p,info:visitInfo(p.id)}))
+    .filter(o=>!q||o.p.name.toLowerCase().includes(q)||(o.p.phone||'').includes(q));
+  // sắp theo độ ưu tiên tái khám: quá hạn/hôm nay/sắp tới trước
+  rows.sort((a,b)=>{
+    const da=a.info.next?daysFromToday(a.info.next):99999;
+    const db=b.info.next?daysFromToday(b.info.next):99999;
+    return da-db;
+  });
+  // cảnh báo cần tái khám
+  const due=rows.filter(o=>o.info.next&&daysFromToday(o.info.next)<=0);
+  const soon=rows.filter(o=>o.info.next&&daysFromToday(o.info.next)>0&&daysFromToday(o.info.next)<=7);
+  let alert='';
+  if(due.length||soon.length){
+    alert=`<div class="alert-recall">🔔 <b>${due.length}</b> bệnh nhân cần tái khám (đến hạn/quá hạn)`+
+      (soon.length?` · <b>${soon.length}</b> sắp tới trong 7 ngày`:'')+`.</div>`;
+  }
+  const body=rows.length?rows.map(o=>{
+    const{p,info}=o;
+    return `<tr class="pt-row" onclick="openPatientDetail('${p.id}')">
+      <td><b>${esc((p.name||'').toUpperCase())}</b>${p.year?' <span style="color:#7a8aa0">('+esc(p.year)+')</span>':''}<div style="font-size:11px;color:#7a8aa0">${esc(p.phone||'')}</div></td>
+      <td style="text-align:center">${info.count}</td>
+      <td>${info.last?fmtDate(info.last):'—'}</td>
+      <td>${recallBadge(info.next)}</td>
+    </tr>`;
+  }).join(''):'<tr><td colspan="4" style="text-align:center;color:#7a8aa0;padding:18px">Chưa có bệnh nhân. Hãy kê và lưu một đơn thuốc.</td></tr>';
+
+  $('ptView').innerHTML=`
+    <h3>👥 Danh sách bệnh nhân (${patients.length})</h3>
+    ${alert}
+    <input class="search-in" placeholder="🔍 Tìm theo tên hoặc SĐT..." value="${esc(filter||'')}"
+      oninput="renderPatientList(this.value)" autofocus>
+    <div style="max-height:420px;overflow:auto;">
+      <table>
+        <thead><tr><th>Bệnh nhân</th><th style="width:70px;text-align:center">Số lần</th><th style="width:110px;">Khám gần nhất</th><th style="width:130px;">Tái khám</th></tr></thead>
+        <tbody>${body}</tbody>
+      </table>
+    </div>`;
+  // giữ con trỏ ô tìm kiếm
+  const s=$('ptView').querySelector('.search-in');if(filter!=null&&s){s.focus();s.setSelectionRange(s.value.length,s.value.length);}
+}
+
+function openPatientDetail(pid){
+  const p=patients.find(x=>x.id===pid);if(!p)return;
+  const info=visitInfo(pid);
+  const hist=info.rxs.map(rx=>{
+    const total=rx.items.reduce((s,it)=>s+(Number(it.qty)||0)*(Number(it.price)||0),0);
+    const drugNames=rx.items.map(it=>it.name).join(', ');
+    return `<div class="rx-hist">
+      <div class="head">
+        <div><b>${fmtDate(rx.date)}</b> <span class="meta">· ${esc(rx.dx||'(không ghi chẩn đoán)')} · ${fmt(total)}</span>
+          ${rx.follow?' · 📅 hẹn '+fmtDate(rx.follow):''}${rx.attN?' · 📎 '+rx.attN+' file':''}</div>
+        <div>
+          <button class="btn-sm btn-open" onclick="loadRx('${rx.id}')">Mở / In lại</button>
+          <button class="btn-sm btn-copy" onclick="copyRx('${rx.id}')">Sao chép</button>
+          <button class="btn-sm btn-del" onclick="delRx('${rx.id}')">Xóa</button>
+        </div>
+      </div>
+      <div class="drugs">💊 ${esc(drugNames)}</div>
+    </div>`;
+  }).join('')||'<p style="color:#7a8aa0">Chưa có đơn thuốc nào.</p>';
+
+  $('ptView').innerHTML=`
+    <button class="btn-sm btn-back" onclick="renderPatientList()">← Danh sách</button>
+    <h3 style="margin-top:10px">📁 ${esc(p.name)} ${p.year?'('+esc(p.year)+')':''}</h3>
+    <div class="pt-info-grid">
+      <div><b>Giới tính:</b> ${esc(p.sex||'')}</div>
+      <div><b>SĐT:</b> ${esc(p.phone||'—')}</div>
+      <div style="grid-column:1/3"><b>Địa chỉ:</b> ${esc(p.addr||'—')}</div>
+      <div><b>Số lần khám:</b> ${info.count}</div>
+      <div><b>Tái khám:</b> ${recallBadge(info.next)}</div>
+    </div>
+    <button class="btn-sm btn-new" onclick="newRxFor('${pid}')">＋ Kê đơn mới cho bệnh nhân này</button>
+    <button class="btn-sm btn-del" style="margin-left:6px" onclick="delPatient('${pid}')">🗑️ Xóa bệnh nhân</button>
+    <h3 style="margin-top:18px;font-size:15px">🗂️ Lịch sử toa thuốc (${info.count})</h3>
+    <div style="max-height:340px;overflow:auto;">${hist}</div>`;
+  show('ptOverlay');
+}
+
+function newRxFor(pid){
+  const p=patients.find(x=>x.id===pid);if(!p)return;
+  currentPatientId=pid;fillForm(p);
+  newRx(true);closeModal('ptOverlay');
+}
+function copyRx(id){
+  const rx=rxAll.find(r=>r.id===id);if(!rx)return;
+  currentPatientId=rx.patientId||null;editingRxId=null;
+  $('ptName').value=rx.name||'';$('ptYear').value=rx.year||'';$('ptSex').value=rx.sex||'Nam';
+  $('ptAddr').value=rx.addr||'';$('ptPhone').value=rx.phone||'';$('ptDx').value=rx.dx||'';
+  $('rxNote').value=rx.note||'';$('docName').value=rx.doc||'';$('rxFollow').value='';
+  $('rxBody').innerHTML='';(rx.items||[]).forEach(it=>addRow(it));if(!rx.items||!rx.items.length)addRow();
+  curAtt=[];renderAtt();
+  setDate();recalc();showBanner();closeModal('ptOverlay');
+  toast('Đã sao chép toa ngày '+fmtDate(rx.date)+' — đây là TOA MỚI, chỉnh sửa rồi bấm Lưu đơn');
+}
+function loadRx(id){
+  const rx=rxAll.find(r=>r.id===id);if(!rx)return;
+  editingRxId=id;
+  currentPatientId=rx.patientId||null;
+  $('ptName').value=rx.name||'';$('ptYear').value=rx.year||'';$('ptSex').value=rx.sex||'Nam';
+  $('ptAddr').value=rx.addr||'';$('ptPhone').value=rx.phone||'';$('ptDx').value=rx.dx||'';
+  $('rxNote').value=rx.note||'';$('docName').value=rx.doc||'';$('rxFollow').value=rx.follow||'';
+  $('rxBody').innerHTML='';rx.items.forEach(it=>addRow(it));if(!rx.items.length)addRow();
+  curAtt=[];renderAtt();idbGet(id).then(f=>{curAtt=f||[];renderAtt();});
+  setDate();recalc();showBanner();closeModal('ptOverlay');
+  toast('Đã mở đơn '+fmtDate(rx.date)+' của '+rx.name);
+}
+function delPatient(pid){
+  const p=patients.find(x=>x.id===pid);if(!p)return;
+  const rxs=rxAll.filter(r=>r.patientId===pid);
+  if(!confirm('Xóa bệnh nhân "'+p.name+'" và toàn bộ '+rxs.length+' đơn thuốc kèm file đính kèm?\nKhông thể hoàn tác.'))return;
+  rxs.forEach(r=>{try{idbDel(r.id);}catch(e){}});
+  rxAll=rxAll.filter(r=>r.patientId!==pid);
+  patients=patients.filter(x=>x.id!==pid);
+  if(currentPatientId===pid){currentPatientId=null;editingRxId=null;showBanner();}
+  saveRxAll();savePatients();renderPatientList();
+  toast('Đã xóa bệnh nhân '+p.name);
+}
+function delRx(id){
+  if(!confirm('Xóa đơn thuốc này?'))return;
+  const rx=rxAll.find(r=>r.id===id);const pid=rx?rx.patientId:null;
+  rxAll=rxAll.filter(r=>r.id!==id);saveRxAll();idbDel(id);
+  if(pid&&!rxAll.some(r=>r.patientId===pid))openPatientDetail(pid);
+  else if(pid)openPatientDetail(pid);else renderPatientList();
+  showBanner();toast('Đã xóa đơn');
+}
+
+/* ===== Modal/Toast ===== */
+function show(id){$(id).classList.add('show');}
+function closeModal(id){$(id).classList.remove('show');}
+let toastT;
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2600);}
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('show');}));
+
+/* ===== Bản in giống PDF ===== */
+function buildPrintView(){
+  const g=id=>($(id).value||'').trim();
+  const rows=[...document.querySelectorAll('#rxBody tr')].map(tr=>{
+    const name=tr.querySelector('.dname').value;if(!name)return null;
+    return {name,
+      s:tr.querySelector('[data-d=s]').value,t:tr.querySelector('[data-d=t]').value,
+      c:tr.querySelector('[data-d=c]').value,e:tr.querySelector('[data-d=e]').value,
+      dunit:tr.querySelector('.dunit').value,
+      note:tr.querySelector('.drugnote')?tr.querySelector('.drugnote').value:'',route:tr.querySelector('.route').value,days:tr.querySelector('.days').value,
+      qty:tr.querySelector('.qty').value,unit:tr.querySelector('.unit').value};
+  }).filter(Boolean);
+  const d=new Date();
+  let h='';
+  h+=`<div class="pv-title">ĐƠN THUỐC</div>`;
+  h+=`<div class="pv-id"><span><b>Họ và tên:</b> ${esc(g('ptName').toUpperCase())}</span><span><b>Năm sinh:</b> ${esc(g('ptYear'))}&nbsp;&nbsp;&nbsp;<b>Giới tính:</b> ${esc(g('ptSex'))}</span></div>`;
+  h+=`<div class="pv-l"><b>Địa chỉ:</b> ${esc(g('ptAddr'))}</div>`;
+  h+=`<div class="pv-l"><b>Chẩn đoán:</b> ${esc(g('ptDx'))}</div>`;
+  rows.forEach((r,i)=>{
+    h+=`<div class="pv-drug"><div class="pv-dh"><span class="pv-no">${i+1}.</span><span class="pv-dn"><b>${esc(r.name)}</b></span><span class="pv-dq">Số lượng: <b>${esc(r.qty)}</b> ${esc(r.unit)}</span></div>`;
+    const u=(r.dunit&&String(r.dunit).trim())?' '+esc(r.dunit.trim()):'';
+    const parts=[];
+    if(String(r.s).trim())parts.push(`Sáng: <b>${esc(r.s)}</b>${u}`);
+    if(String(r.t).trim())parts.push(`Trưa: <b>${esc(r.t)}</b>${u}`);
+    if(String(r.c).trim())parts.push(`Chiều: <b>${esc(r.c)}</b>${u}`);
+    if(String(r.e).trim())parts.push(`Tối: <b>${esc(r.e)}</b>${u}`);
+    let dose=parts.join('&emsp;');
+    if(r.route)dose+=`${parts.length?'&emsp;':''}<span class="pv-rt">(${esc(r.route)})</span>`;
+    h+=`<div class="pv-dd">${dose}</div>${(r.note&&String(r.note).trim())?`<div class="pv-dnote">${esc(r.note)}</div>`:''}</div>`;
+  });
+  const fu=$('rxFollow').value?`<div style="margin-top:6px;"><b>Hẹn tái khám:</b> ${fmtDate($('rxFollow').value)}</div>`:'';
+  const _gn=g('rxNote');let _gnh='';if(_gn&&_gn.trim()){_gnh='<div><b>Ghi chú:</b></div>'+_gn.split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(l=>'<div style="margin-left:8px">– '+esc(l)+'</div>').join('');}
+  h+=`<div class="pv-bottom"><div class="pv-note">${_gnh}${fu}</div>`;
+  h+=`<div class="pv-sign"><div class="pv-date">Ngày ${d.getDate()} tháng ${d.getMonth()+1} năm ${d.getFullYear()}</div><div class="pv-role">Bác sĩ khám bệnh</div><div class="pv-space"></div><div class="pv-doc">${esc(g('docName'))}</div></div></div>`;
+  $('printView').innerHTML=h;
+}
+function doPrint(){buildPrintView();window.print();}
+window.addEventListener('beforeprint',buildPrintView);
+
+/* Kéo chỉnh độ rộng cột bảng thuốc */
+function saveColW(){jset('rx_colw',[...document.querySelectorAll('#rxTable thead th')].map(t=>t.style.width||''));}
+function restoreColW(){const ws=jget('rx_colw',null);if(!Array.isArray(ws))return;const ths=document.querySelectorAll('#rxTable thead th');ws.forEach((w,i)=>{if(w&&ths[i])ths[i].style.width=w;});}
+function initColResize(){
+  const ths=document.querySelectorAll('#rxTable thead th');
+  ths.forEach(th=>{
+    if(th.querySelector('.col-resizer'))return;
+    const h=document.createElement('div');h.className='col-resizer';th.appendChild(h);
+    h.addEventListener('mousedown',e=>{e.preventDefault();e.stopPropagation();
+      const sx=e.pageX,sw=th.offsetWidth;
+      const mm=ev=>{th.style.width=Math.max(36,sw+(ev.pageX-sx))+'px';};
+      const mu=()=>{document.removeEventListener('mousemove',mm);document.removeEventListener('mouseup',mu);saveColW();};
+      document.addEventListener('mousemove',mm);document.addEventListener('mouseup',mu);
+    });
+  });
+  restoreColW();
+}
+/* Kéo đổi thứ tự dòng thuốc */
+let _dragRow=null;
+function initRowDnD(){
+  const body=$('rxBody');if(!body||body._dnd)return;body._dnd=1;
+  body.addEventListener('dragstart',e=>{const td=e.target.closest&&e.target.closest('td.idx');if(!td){e.preventDefault();return;}_dragRow=td.closest('tr');_dragRow.classList.add('dragging');e.dataTransfer.effectAllowed='move';try{e.dataTransfer.setData('text/plain','x');}catch(_){}});
+  body.addEventListener('dragover',e=>{if(!_dragRow)return;e.preventDefault();const tr=e.target.closest&&e.target.closest('tr');if(!tr||tr===_dragRow||tr.parentNode!==body)return;const r=tr.getBoundingClientRect();const after=(e.clientY-r.top)>r.height/2;body.insertBefore(_dragRow,after?tr.nextSibling:tr);});
+  body.addEventListener('drop',e=>{e.preventDefault();});
+  body.addEventListener('dragend',()=>{if(_dragRow)_dragRow.classList.remove('dragging');_dragRow=null;recalc();});
+}
+/* ===== Khởi tạo ===== */
+buildDrugDatalist();addRow();addRow();setDate();initColResize();initRowDnD();
+(function(){try{const bc=new BroadcastChannel('toa_app_instance');let checking=true;bc.onmessage=e=>{if(e.data==='who'){bc.postMessage('here');}else if(e.data==='here'&&checking){const d=document.getElementById('dupNotice');if(d)d.style.display='flex';}};bc.postMessage('who');setTimeout(()=>{checking=false;},800);}catch(e){}})();
+setTimeout(fitAllDrugs,150);
+window.addEventListener('load',fitAllDrugs);
+</script>
+</body>
+</html>

@@ -128,6 +128,8 @@
   .overlay.show{display:flex;}
   .modal{background:#fff;border-radius:10px;max-width:760px;width:100%;padding:20px 22px;}
   .modal.wide{max-width:1280px;}
+  #adminOverlay{background:#fff;align-items:stretch;padding:0;}
+  #adminOverlay .admin-page{max-width:none;width:100%;min-height:100vh;max-height:none;margin:0;border-radius:0;box-shadow:none;overflow:auto;padding:20px 26px 40px;}
   #drugMgrTable td input{width:100%;border:1px solid #dde5ef;border-radius:5px;padding:6px;font-size:13px;font-family:inherit;}
   .modal h3{margin:0 0 14px;color:var(--blue-dark);}
   .modal .close{float:right;background:none;border:none;font-size:22px;cursor:pointer;color:#888;}
@@ -277,7 +279,6 @@
   <button onclick="openStats()" class="ghost">📊 Thống kê</button>
   <button onclick="doPrint()">🖨️ In / PDF</button>
   <button onclick="exportData()" class="ghost">⬇️ Sao lưu</button>
-  <button id="adminBtn" onclick="openAdmin()" class="ghost" style="display:none">👤 Tài khoản</button>
   <button id="cloudBtn" onclick="cloudLogout()" class="ghost">🔓 Đăng xuất</button>
   <label for="impInput" class="tbtn">⬆️ Nhập</label>
   <input type="file" id="impInput" accept="application/json,.json" style="display:none" onchange="importData(this)">
@@ -376,7 +377,7 @@
 
 <!-- Modal: Quản lý quyền tài khoản -->
 <div class="overlay" id="adminOverlay">
-  <div class="modal">
+  <div class="modal admin-page">
     <button class="close" onclick="closeModal('adminOverlay')">&times;</button>
     <button class="btn-sm" onclick="backToModePicker()" style="margin-bottom:8px">← Quay lại chọn chế độ</button>
     <h3>👤 Quản lý quyền tài khoản</h3>

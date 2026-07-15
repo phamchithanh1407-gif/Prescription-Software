@@ -298,6 +298,7 @@
   <button class="snav-btn" data-tab="patients" onclick="showTab('patients')">👥<br>Bệnh nhân</button>
   <button class="snav-btn" data-tab="drugs" onclick="showTab('drugs')">📋<br>Danh mục thuốc</button>
   <button class="snav-btn" data-tab="stats" onclick="showTab('stats')">📊<br>Thống kê</button>
+  <button class="snav-btn" id="modeSwitchBtn" style="display:none" onclick="showModePickerFiltered()">🔄<br>Chế độ khám</button>
 </div>
 <div class="wrap">
   <div id="viewReception" style="display:none">
@@ -403,7 +404,6 @@
       </div>
     </div>
 
-    <div id="khoBar" class="kho-bar"></div>
     <div class="rx-scroll"><table id="rxTable">
       <thead>
         <tr>
@@ -806,7 +806,7 @@ let curKho=jget('rx_curkho','pk');
 let curMode=jget('rx_curmode','pk');
 const MODES={pk:'🏥 Khám phòng khám',tt:'❤️ Khám từ thiện'};
 function showModePicker(){var mo=document.getElementById('modeOverlay');if(mo)mo.style.display='flex';}
-function setMode(m){if(_perm&&_perm.mode&&_perm.mode!=='both'&&_perm.mode!==m){toast('Tài khoản không có quyền vào chế độ này');return;}curMode=m;jset('rx_curmode',m);curKho=m;jset('rx_curkho',m);var mo=document.getElementById('modeOverlay');if(mo)mo.style.display='none';if(typeof buildIndex==='function')buildIndex();renderKhoBars();try{if(typeof renderPatientList==='function')renderPatientList();}catch(e){}try{if(typeof showTab==='function')showTab('reception');}catch(e){}toast(MODES[m]);}
+function setMode(m){if(_perm&&_perm.mode&&_perm.mode!=='both'&&_perm.mode!==m){toast('Tài khoản không có quyền vào chế độ này');return;}curMode=m;jset('rx_curmode',m);curKho=m;jset('rx_curkho',m);var mo=document.getElementById('modeOverlay');if(mo)mo.style.display='none';if(typeof buildIndex==='function')buildIndex();renderKhoBars();try{if(typeof renderPatientList==='function')renderPatientList();}catch(e){}try{if(typeof showTab==='function')showTab('reception');}catch(e){}var msb=document.getElementById('modeSwitchBtn');if(msb)msb.style.display=(_perm&&(_perm.mode==='both'||_perm.admin))?'':'none';toast(MODES[m]);}
 function updateAdminBtn(){var b=document.getElementById('adminBtn');if(b)b.style.display=(_perm&&_perm.admin)?'':'none';}
 function showModePickerFiltered(){var allowed=(_perm&&_perm.mode)?_perm.mode:'both';var pk=document.querySelector('#modeOverlay .mode-btn.pk');var tt=document.querySelector('#modeOverlay .mode-btn.tt');var msg=document.getElementById('modeMsg');var mo=document.getElementById('modeOverlay');var ab=document.getElementById('modeAdminBtn');if(ab)ab.style.display=(_perm&&_perm.admin&&allowed!=='none')?'':'none';if(allowed==='none'){if(pk)pk.style.display='none';if(tt)tt.style.display='none';if(msg)msg.innerHTML='⏳ Tài khoản chưa được cấp quyền.<br>Vui lòng liên hệ quản trị để được cấp chế độ, rồi đăng nhập lại.<br><button class="kho-tab" style="margin-top:12px" onclick="cloudLogout()">Đăng xuất</button>';if(mo)mo.style.display='flex';return;}if(msg)msg.innerHTML='';if(pk)pk.style.display=(allowed==='tt')?'none':'';if(tt)tt.style.display=(allowed==='pk')?'none':'';if(allowed==='pk'){setMode('pk');return;}if(allowed==='tt'){setMode('tt');return;}if(mo)mo.style.display='flex';}
 function loadPermsAndPick(){if(!(CLOUD&&_db&&_auth)){_perm={mode:'both',admin:false};showModePickerFiltered();return;}_db.collection('perms').get().then(function(snap){var map={};var anyAdmin=false;snap.forEach(function(d){var v=d.data()||{};map[d.id]=v;if(v.admin)anyAdmin=true;});var email=((_auth.currentUser&&_auth.currentUser.email)||'').toLowerCase();var p=map[email];if(!anyAdmin){_perm={mode:'both',admin:true};}else if(p){_perm={mode:p.mode||'both',admin:!!p.admin};}else{_perm={mode:'none',admin:false};}updateAdminBtn();showModePickerFiltered();}).catch(function(){_perm={mode:'both',admin:false};updateAdminBtn();showModePickerFiltered();});}
@@ -822,7 +822,7 @@ function delPerm(em){if(confirm('Xóa quyền của '+em+'?\nTài khoản này s
 const KHOS={pk:'🏥 Phòng khám',tt:'❤️ Khám từ thiện'};
 function khoCount(k){return drugs.filter(function(d){return (d.kho||'pk')===k;}).length;}
 function khoTabsHTML(){return Object.keys(KHOS).map(function(k){return '<button class="kho-tab'+(curKho===k?' active':'')+'" onclick="setKho(\''+k+'\')">'+KHOS[k]+' ('+khoCount(k)+')</button>';}).join('');}
-function renderKhoBars(){var a=document.getElementById('khoBar');if(a)a.innerHTML='<span class="kho-lbl">Chế độ:</span> <b>'+MODES[curMode]+'</b> <button class="kho-tab" onclick="showModePicker()">🔀 Đổi chế độ</button>';var b=document.getElementById('drugKhoTabs');if(b)b.innerHTML='<span class="kho-tab active" style="cursor:default">Kho '+KHOS[curMode]+'</span>';}
+function renderKhoBars(){var b=document.getElementById('drugKhoTabs');if(b)b.innerHTML='<span class="kho-tab active" style="cursor:default">Kho '+KHOS[curMode]+'</span>';}
 function setKho(k){curKho=k;jset('rx_curkho',k);var b=document.getElementById('drugKhoTabs');if(b)b.innerHTML=khoTabsHTML();if(document.getElementById('drugMgrBody'))renderDrugList();toast('Xem kho: '+KHOS[k]);}
 function buildIndex(){
   DISPLAY_INDEX={};

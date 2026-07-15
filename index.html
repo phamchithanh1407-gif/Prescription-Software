@@ -19,7 +19,7 @@
     background:var(--bg);color:var(--txt);font-size:16px;}
   .topbar{background:var(--blue-dark);color:#fff;padding:10px 18px;display:flex;
     align-items:center;gap:10px;flex-wrap:wrap;position:sticky;top:0;z-index:50;}
-  .topbar h1{font-size:17px;margin:0;font-weight:600;flex:1;}
+  .topbar h1{font-size:17px;margin:0;font-weight:600;}
   .topbar button{background:#fff;color:var(--blue-dark);border:none;padding:8px 13px;
     border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;}
   .topbar button:hover{background:#e3f2fd;}
@@ -282,11 +282,12 @@
 
 <div class="topbar">
   <h1>💊 Phần mềm kê toa thuốc</h1>
-  <button onclick="openProto()" class="ghost">🧩 Phác đồ</button>
+  <span id="userInfo" style="display:none;font-size:13px;font-weight:600;color:#0d47a1;background:#e3f0ff;padding:6px 12px;border-radius:8px;">👤 <span id="userEmail"></span></span>
+  <button id="cloudBtn" onclick="cloudLogout()" class="ghost" style="background:#ffdede;color:#c62828;border:1px solid #ef9a9a;font-weight:700;">🔓 Đăng xuất</button>
+  <button onclick="openProto()" class="ghost" style="margin-left:auto">🧩 Phác đồ</button>
   <button onclick="openApproach()" class="ghost">📚 Sơ đồ phác đồ</button>
   <button onclick="doPrint()">🖨️ In / PDF</button>
   <button onclick="exportData()" class="ghost">⬇️ Sao lưu</button>
-  <button id="cloudBtn" onclick="cloudLogout()" class="ghost">🔓 Đăng xuất</button>
   <label for="impInput" class="tbtn">⬆️ Nhập</label>
   <input type="file" id="impInput" accept="application/json,.json" style="display:none" onchange="importData(this)">
 </div>
@@ -1665,8 +1666,8 @@ function cloudInit(){
   const ov=document.getElementById('loginOverlay');if(ov)ov.style.display='flex';
   _auth.onAuthStateChanged(function(u){
     const ov=document.getElementById('loginOverlay');const b=document.getElementById('cloudBtn');
-    if(u){if(ov)ov.style.display='none';if(b)b.style.display='';startSync();loadPermsAndPick();}
-    else{if(ov)ov.style.display='flex';if(b)b.style.display='none';const st=document.getElementById('loginState');if(st)st.textContent='';}
+    var ui=document.getElementById('userInfo'),ue=document.getElementById('userEmail');if(u){if(ov)ov.style.display='none';if(b)b.style.display='inline-block';if(ui&&ue){ue.textContent=(u.email||'');ui.style.display='inline-block';}startSync();loadPermsAndPick();}
+    else{if(ov)ov.style.display='flex';if(b)b.style.display='none';if(ui)ui.style.display='none';const st=document.getElementById('loginState');if(st)st.textContent='';}
   });
 }
 function cloudLogin(){

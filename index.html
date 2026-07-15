@@ -1661,7 +1661,7 @@ function initRowDnD(){
 }
 /* ===== Firebase đồng bộ đám mây ===== */
 const FB_CONFIG={apiKey:"AIzaSyDKsKCTRefCDF4TE5BDko6TWIerKEA-AUQ",authDomain:"drthanh-prescription-software.firebaseapp.com",projectId:"drthanh-prescription-software",storageBucket:"drthanh-prescription-software.firebasestorage.app",messagingSenderId:"445597901871",appId:"1:445597901871:web:ab2a240e0ce584806892da"};
-var CLOUD=false,_db=null,_auth=null,_st=null,_cloudReady=false,_applying=false;var _pushT={};var _perm=null;
+var CLOUD=false,_db=null,_auth=null,_st=null,_cloudReady=false,_applying=false;var _pushT={};var _perm=null;var _cloudSeen={};
 const CLOUD_KEYS={drugs:{arr:()=>drugs,ls:LS_DRUGS},patients:{arr:()=>patients,ls:LS_PATIENTS},prescriptions:{arr:()=>rxAll,ls:LS_SAVED},protocols:{arr:()=>protocols,ls:'rx_protocols_v1'},approachTopics:{arr:()=>_apTopics,ls:LS_APTOP},receptions:{arr:()=>receptions,ls:'rx_receptions_v1'}};
 function cloudInit(){
   if(typeof firebase==='undefined'||!firebase.initializeApp){_perm={mode:'both',admin:false};showModePickerFiltered();return;}
@@ -1692,7 +1692,7 @@ function startSync(){
       if(!snap.exists){cloudPush(key);return;}
       const data=snap.data();const list=(data&&Array.isArray(data.list))?data.list:[];
       applyCloud(key,list);
-    },function(){});
+    },function(e){console.warn('sync err',key,e);toast('⚠️ Lỗi đồng bộ: '+((e&&e.code)||'network'));});
   });
   toast('☁️ Đã kết nối dữ liệu đám mây');
 }
@@ -1700,19 +1700,30 @@ function ckey(name,x){if(name==='drugs')return((x.name||'')+'|'+(x.ham||'')).toL
 function applyCloud(key,list){
   const info=CLOUD_KEYS[key];if(!info)return;
   const arr=info.arr();
-  const map=new Map();
-  for(const x of arr)map.set(ckey(key,x),x);
-  for(const x of list)map.set(ckey(key,x),x);
-  const merged=[...map.values()];
   _applying=true;
-  arr.length=0;for(let i=0;i<merged.length;i++)arr.push(merged[i]);
-  jset(info.ls,merged);
-  _applying=false;
+  if(!_cloudSeen[key]){
+    // Lần đầu nhận cloud: hợp nhất để không mất dữ liệu local chưa đẩy lên
+    _cloudSeen[key]=true;
+    const map=new Map();
+    for(const x of arr)map.set(ckey(key,x),x);
+    for(const x of list)map.set(ckey(key,x),x);
+    const merged=[...map.values()];
+    arr.length=0;for(let i=0;i<merged.length;i++)arr.push(merged[i]);
+    jset(info.ls,merged);
+    _applying=false;
+    if(merged.length!==list.length)cloudPush(key); // có item local dư -> chia sẻ lên cloud
+  }else{
+    // Các lần sau: SAO CHÉP y hệt cloud (đồng bộ cả sửa lẫn xóa giữa các máy)
+    arr.length=0;for(let i=0;i<list.length;i++)arr.push(list[i]);
+    jset(info.ls,arr.slice());
+    _applying=false;
+  }
   try{
-    if(key==='drugs'&&typeof buildIndex==='function'){buildIndex();if(typeof renderKhoBars==='function')renderKhoBars();}
+    if(key==='drugs'&&typeof buildIndex==='function'){buildIndex();if(typeof renderKhoBars==='function')renderKhoBars();if(typeof renderDrugList==='function'&&_tab==='drugs')renderDrugList();}
     if(typeof renderPatientList==='function')renderPatientList();
     if(typeof updateHistory==='function')updateHistory();
-    if(key==='protocols'&&typeof renderProto==='function')renderProto('');if(key==='receptions'){if(typeof renderReception==='function')renderReception();if(typeof renderKeList==='function')renderKeList();}
+    if(key==='protocols'&&typeof renderProto==='function')renderProto('');
+    if(key==='receptions'){if(typeof renderReception==='function')renderReception();if(typeof renderKeList==='function')renderKeList();if(typeof renderDispense==='function')renderDispense();}
   }catch(e){}
 }
 function cloudPush(key){

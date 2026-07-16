@@ -1481,12 +1481,14 @@ function renderPatientList(filter){
   const body=rows.length?rows.map(o=>{
     const{p,info}=o;
     return `<tr class="pt-row" onclick="openPatientDetail('${p.id}')">
-      <td><b>${esc((p.name||'').toUpperCase())}</b>${p.year?' <span style="color:#7a8aa0">('+esc(p.year)+')</span>':''}<div style="font-size:11px;color:#7a8aa0">${esc(p.phone||'')}</div></td>
+      <td><b>${esc((p.name||'').toUpperCase())}</b></td>
+      <td>${esc(p.year||'')}</td>
+      <td>${esc(p.phone||'')}</td>
       <td style="text-align:center">${info.count}</td>
       <td>${info.last?fmtDate(info.last):'—'}</td>
       <td>${recallBadge(info.next)}</td>
     </tr>`;
-  }).join(''):'<tr><td colspan="4" style="text-align:center;color:#7a8aa0;padding:18px">Chưa có bệnh nhân. Hãy kê và lưu một đơn thuốc.</td></tr>';
+  }).join(''):'<tr><td colspan="6" style="text-align:center;color:#7a8aa0;padding:18px">Chưa có bệnh nhân. Hãy kê và lưu một đơn thuốc.</td></tr>';
 
   $('ptView').innerHTML=`
     <h3>👥 Danh sách bệnh nhân (${patients.length})</h3>
@@ -1495,7 +1497,7 @@ function renderPatientList(filter){
       oninput="renderPatientList(this.value)" autofocus>
     <div style="max-height:420px;overflow:auto;">
       <table>
-        <thead><tr><th>Bệnh nhân</th><th style="width:70px;text-align:center">Số lần</th><th style="width:110px;">Khám gần nhất</th><th style="width:130px;">Tái khám</th></tr></thead>
+        <thead><tr><th style="width:26%">Bệnh nhân</th><th style="width:12%">Năm sinh</th><th style="width:16%">SĐT</th><th style="width:12%;text-align:center">Số lần</th><th style="width:17%">Khám gần nhất</th><th style="width:17%">Tái khám</th></tr></thead>
         <tbody>${body}</tbody>
       </table>
     </div>`;

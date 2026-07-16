@@ -1702,24 +1702,12 @@ function ckey(name,x){if(name==='drugs')return((x.name||'')+'|'+(x.ham||'')).toL
 function applyCloud(key,list){
   const info=CLOUD_KEYS[key];if(!info)return;
   const arr=info.arr();
+  // LUÔN lấy y hệt cloud (đám mây là nguồn dữ liệu duy nhất). Không hợp nhất cache local -> xóa ở máy này mất luôn ở mọi máy, không bị trùng.
   _applying=true;
-  if(!_cloudSeen[key]){
-    // Lần đầu nhận cloud: hợp nhất để không mất dữ liệu local chưa đẩy lên
-    _cloudSeen[key]=true;
-    const map=new Map();
-    for(const x of arr)map.set(ckey(key,x),x);
-    for(const x of list)map.set(ckey(key,x),x);
-    const merged=[...map.values()];
-    arr.length=0;for(let i=0;i<merged.length;i++)arr.push(merged[i]);
-    jset(info.ls,merged);
-    _applying=false;
-    if(merged.length!==list.length)cloudPush(key); // có item local dư -> chia sẻ lên cloud
-  }else{
-    // Các lần sau: SAO CHÉP y hệt cloud (đồng bộ cả sửa lẫn xóa giữa các máy)
-    arr.length=0;for(let i=0;i<list.length;i++)arr.push(list[i]);
-    jset(info.ls,arr.slice());
-    _applying=false;
-  }
+  _cloudSeen[key]=true;
+  arr.length=0;for(let i=0;i<list.length;i++)arr.push(list[i]);
+  jset(info.ls,arr.slice());
+  _applying=false;
   try{
     if(key==='drugs'&&typeof buildIndex==='function'){buildIndex();if(typeof renderKhoBars==='function')renderKhoBars();if(typeof renderDrugList==='function'&&_tab==='drugs')renderDrugList();}
     if(typeof renderPatientList==='function')renderPatientList();

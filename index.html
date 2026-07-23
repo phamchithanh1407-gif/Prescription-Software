@@ -172,7 +172,7 @@
   #printView{display:none;}
   @media print{
     @page{size:A4;margin:18mm 16mm;}
-    .topbar,.wrap,.overlay,.toast{display:none!important;}
+    .topbar,.wrap,.overlay,.toast,#sideNav,#modeOverlay,#loginOverlay{display:none!important;}
     html,body{background:#fff!important;}
     #printView,#printView *{background:transparent!important;background-color:transparent!important;}
     #printView{display:block!important;font-family:"Times New Roman",Times,serif;color:#000;font-size:15px;line-height:1.55;}
@@ -373,7 +373,7 @@
     <button class="btn-sm" onclick="showTab('prescribe')" style="margin-bottom:8px">← Danh sách bệnh nhân</button>
     <div class="pt-banner" id="ptBanner">
       <span>📁 Hồ sơ: <b id="bannerName"></b> <span id="bannerMeta"></span></span>
-      <button onclick="openPatientDetail(currentPatientId)">Xem hồ sơ</button>
+      <button onclick="viewProfile()">Xem hồ sơ</button>
     </div>
 
     <h2 class="title">ĐƠN THUỐC</h2>
@@ -1068,7 +1068,7 @@ function addRow(data){
 // Tự co chữ cho vừa bề ngang ô (luôn thấy trọn tên thuốc)
 function fitText(el){if(el)el.style.fontSize='13px';}
 function autoGrow(el){if(!el)return;el.style.height='auto';el.style.height=Math.max(el.scrollHeight,34)+'px';}
-function fitAllDrugs(){document.querySelectorAll('#rxBody .dname').forEach(fitText);}
+function fitAllDrugs(){document.querySelectorAll('#rxBody .dname').forEach(function(el){fitText(el);autoGrow(el);});}
 function infoOf(name){return drugByDisplay(name);}
 function unitFromForm(dbc){const d=(dbc||'').toLowerCase();
   if(/bút tiêm|bút|pen/.test(d))return 'Bút tiêm';
@@ -1172,7 +1172,7 @@ function lockedByOther(r){return !!(r&&r.lockedBy&&r.lockedBy!==myEmail()&&(Date
 function startLockHB(id){stopLockHB();_lockHB=setInterval(function(){var r=receptions.find(function(x){return x.id===id;});if(r&&_curReception===id){r.lockTs=Date.now();saveReceptions();}else{stopLockHB();}},60000);}
 function stopLockHB(){if(_lockHB){clearInterval(_lockHB);_lockHB=null;}}
 function releaseLock(){if(_curReception){var r=receptions.find(function(x){return x.id===_curReception;});if(r&&r.lockedBy===myEmail()){r.lockedBy='';r.lockTs=0;saveReceptions();}}stopLockHB();}
-function showRxForm(){var vr=$('viewReception'),vk=$('viewKeList'),rc=$('rxCard'),rf=$('viewRecForm'),vs=$('viewStats'),vd=$('viewDispense'),vp=$('viewPatients'),vg=$('viewDrugs');if(vr)vr.style.display='none';if(vk)vk.style.display='none';if(rf)rf.style.display='none';if(vs)vs.style.display='none';if(vd)vd.style.display='none';if(vp)vp.style.display='none';if(vg)vg.style.display='none';if(rc)rc.style.display='';_tab='prescribe';document.querySelectorAll('#sideNav .snav-btn').forEach(function(b){b.classList.toggle('active',b.dataset.tab==='prescribe');});}
+function showRxForm(){var vr=$('viewReception'),vk=$('viewKeList'),rc=$('rxCard'),rf=$('viewRecForm'),vs=$('viewStats'),vd=$('viewDispense'),vp=$('viewPatients'),vg=$('viewDrugs');if(vr)vr.style.display='none';if(vk)vk.style.display='none';if(rf)rf.style.display='none';if(vs)vs.style.display='none';if(vd)vd.style.display='none';if(vp)vp.style.display='none';if(vg)vg.style.display='none';if(rc)rc.style.display='';_tab='prescribe';document.querySelectorAll('#sideNav .snav-btn').forEach(function(b){b.classList.toggle('active',b.dataset.tab==='prescribe');});setTimeout(function(){document.querySelectorAll('#rxBody .dname').forEach(autoGrow);},0);}
 function showTab(t){if(_curReception){releaseLock();_curReception=null;}_tab=t;document.querySelectorAll('#sideNav .snav-btn').forEach(function(b){b.classList.toggle('active',b.dataset.tab===t);});var vr=$('viewReception'),vk=$('viewKeList'),rc=$('rxCard'),rf=$('viewRecForm'),vs=$('viewStats'),vd=$('viewDispense'),vp=$('viewPatients'),vg=$('viewDrugs');if(rc)rc.style.display='none';if(rf)rf.style.display='none';if(vr)vr.style.display=(t==='reception')?'':'none';if(vk)vk.style.display=(t==='prescribe')?'':'none';if(vd)vd.style.display=(t==='dispense')?'':'none';if(vp)vp.style.display=(t==='patients')?'':'none';if(vg)vg.style.display=(t==='drugs')?'':'none';if(vs)vs.style.display=(t==='stats')?'':'none';if(t==='reception')renderReception();if(t==='prescribe')renderKeList();if(t==='dispense')renderDispense();if(t==='patients')renderPatientList();if(t==='drugs'){curKho=curMode;renderKhoBars();renderDrugList();}if(t==='stats'){if(!_statMonth)_statMonth=todayISO().slice(0,7);renderStats();}}
 function recTs(r){return r.ts||(Number(String(r.id||'').replace(/\D/g,''))||0);}
 function todayRec(){var t=todayISO();return receptions.filter(function(r){return (r.mode||'pk')===curMode&&(r.date||'').slice(0,10)===t;}).sort(function(a,b){return recTs(a)-recTs(b);});}
@@ -1197,7 +1197,7 @@ function renderKeList(){var box=$('keListBody');if(!box)return;var list=todayRec
 function prescribeRec(id){var r=receptions.find(function(x){return x.id===id;});if(!r)return;if(lockedByOther(r)){toast('⛔ Bệnh nhân này đang được '+r.lockedBy+' kê đơn — vui lòng đợi.');return;}r.lockedBy=myEmail();r.lockTs=Date.now();saveReceptions();startLockHB(id);if(r.rxId&&rxAll.some(function(x){return x.id===r.rxId;})){loadRx(r.rxId);_curReception=id;showRxForm();toast('Mở lại đơn của '+(r.name||''));return;}newRx();$('ptName').value=(r.name||'');$('ptYear').value=(r.year||'');$('ptSex').value=(r.sex||'Nam');$('ptAddr').value=(r.addr||'');$('ptPhone').value=(r.phone||'');$('ptDx').value=(r.reason||'');_curReception=id;showRxForm();toast('Kê đơn cho '+(r.name||''));}
 function renderDispense(){var box=$('dispBody');if(!box)return;var fe=$('dispFrom'),te=$('dispTo'),t=todayISO();if(fe&&!fe.value)fe.value=t;if(te&&!te.value)te.value=t;var from=fe?fe.value:t,to=te?te.value:t;var list=receptions.filter(function(r){return (r.mode||'pk')===curMode&&r.rxId&&(r.date||'').slice(0,10)>=from&&(r.date||'').slice(0,10)<=to;}).sort(function(a,b){return recTs(a)-recTs(b);});box.innerHTML=list.map(function(r,i){var st=r.dispensed?'<span style="color:#2e7d32;font-weight:700">✅ Đã phát thuốc</span>':'<span style="color:#c62828;font-weight:600">⏳ Chưa nhận thuốc</span>';var btn=r.dispensed?'<button class="btn-sm" disabled style="opacity:.45">Đã phát</button>':'<button class="btn-sm btn-new" onclick="dispenseRec(\''+r.id+'\')">✔ Phát thuốc</button>';return '<tr>'+'<td style="text-align:center">'+(i+1)+'</td>'+'<td><b>'+esc((r.name||'(chưa tên)').toUpperCase())+'</b></td>'+'<td>'+esc(r.year||'')+'</td>'+'<td>'+esc(r.addr||'')+'</td>'+'<td>'+st+'</td>'+'<td><button class="btn-sm btn-open" onclick="printRec(\''+r.id+'\')">🖨️ Xem</button></td>'+'<td>'+btn+'</td>'+'<td><button class="btn-sm btn-del" onclick="dispDelRec(\''+r.id+'\')" title="Bỏ bệnh nhân">🗑️</button></td></tr>';}).join('')||'<tr><td colspan="8" style="text-align:center;color:#7a8aa0;padding:16px">Chưa có bệnh nhân được kê đơn hôm nay.</td></tr>';}
 function dispDelRec(id){var r=receptions.find(function(x){return x.id===id;});if(!r)return;if(!confirm('Bỏ bệnh nhân "'+(r.name||'(chưa tên)')+'" khỏi danh sách phát thuốc?'))return;receptions=receptions.filter(function(x){return x.id!==id;});saveReceptions();renderDispense();toast('Đã bỏ '+(r.name||''));}
-function dispenseRec(id){var r=receptions.find(function(x){return x.id===id;});if(!r)return;r.dispensed=true;r.dispTs=Date.now();saveReceptions();renderDispense();toast('Đã phát thuốc cho '+(r.name||''));}
+function dispenseRec(id){var r=receptions.find(function(x){return x.id===id;});if(!r)return;r.dispensed=true;r.dispTs=Date.now();if(r.rxId){var rx=rxAll.find(function(x){return x.id===r.rxId;});if(rx){rx.dispensed=true;var p=patients.find(function(x){return x.id===rx.patientId;});if(!p){p={id:rx.patientId||('P'+Date.now()),name:rx.name||r.name||'',year:rx.year||r.year||'',sex:rx.sex||r.sex||'Nam',addr:rx.addr||r.addr||'',phone:rx.phone||r.phone||'',note:'',nextVisit:rx.follow||'',mode:(r.mode||curMode)};rx.patientId=p.id;patients.push(p);}else{if(rx.sex)p.sex=rx.sex;if(rx.addr)p.addr=rx.addr;if(rx.phone)p.phone=rx.phone;if(rx.follow)p.nextVisit=rx.follow;}saveRxAll();savePatients();}}saveReceptions();renderDispense();toast('Đã phát thuốc cho '+(r.name||''));}
 function printRec(id){var r=receptions.find(function(x){return x.id===id;});if(!r||!r.rxId)return;var prev=_tab||'dispense';loadRx(r.rxId);showTab(prev);buildPrintView();window.print();}
 function dispToday(){var t=todayISO();if($('dispFrom'))$('dispFrom').value=t;if($('dispTo'))$('dispTo').value=t;renderDispense();}
 
@@ -1247,30 +1247,34 @@ function saveRx(){
   if(!rx.name){toast('⚠️ Nhập tên bệnh nhân trước khi lưu');return;}
   if(!rx.items.length){toast('⚠️ Chưa có thuốc nào trong đơn');return;}
   if(document.querySelector('#rxBody tr .qty[data-over="1"]')){toast('🚨 Có thuốc kê VƯỢT tồn kho từ thiện — sửa lại số lượng trước khi lưu');return;}
-  // gắn bệnh nhân
+  // gắn bệnh nhân — KHÔNG tạo hồ sơ vào tab Bệnh nhân ở bước này; chỉ khi PHÁT THUỐC mới lưu
   let pid=currentPatientId;
   const p0=patients.find(x=>x.id===pid);
-  if(!p0||pkey(p0.name,p0.year)!==pkey(rx.name,rx.year)) pid=findOrCreatePatient(rx);
+  if(!p0||pkey(p0.name,p0.year)!==pkey(rx.name,rx.year)){
+    var _ex=patients.find(x=>pkey(x.name,x.year)===pkey(rx.name,rx.year)&&(x.mode||'pk')===curMode);
+    pid=_ex?_ex.id:('P'+Date.now()+Math.floor(Math.random()*1000));
+  }
   currentPatientId=pid;
   const p=patients.find(x=>x.id===pid);
-  // cập nhật thông tin hành chính mới nhất
-  p.sex=rx.sex;if(rx.addr)p.addr=rx.addr;if(rx.phone)p.phone=rx.phone;
-  if(rx.follow)p.nextVisit=rx.follow;
+  if(p){p.sex=rx.sex;if(rx.addr)p.addr=rx.addr;if(rx.phone)p.phone=rx.phone;if(rx.follow)p.nextVisit=rx.follow;}
   rx.patientId=pid;rx.attN=curAtt.length;
   const eidx=editingRxId?rxAll.findIndex(r=>r.id===editingRxId):-1;
   if(eidx>=0){
     rx.id=editingRxId;rx.date=rxAll[eidx].date;rxAll[eidx]=rx;
     idbPut(rx.id,curAtt.slice()).catch(()=>{});
+    var _lnkE=receptions.some(function(x){return x.rxId===editingRxId;});
     saveRxAll();savePatients();showBanner();releaseLock();_curReception=null;
     toast('💾 Đã cập nhật toa (ngày '+fmtDate(rx.date)+') của '+rx.name);
+    if(_lnkE&&typeof showTab==='function')showTab('dispense');
     return;
   }
-  rx.id="R"+Date.now();editingRxId=rx.id;if(_curReception){var _rc=receptions.find(function(x){return x.id===_curReception;});if(_rc){_rc.rxId=rx.id;_rc.lockedBy="";_rc.lockTs=0;saveReceptions();}stopLockHB();_curReception=null;}
+  var _fromRec=!!_curReception;rx.id="R"+Date.now();editingRxId=rx.id;rx.dispensed=false;if(_curReception){var _rc=receptions.find(function(x){return x.id===_curReception;});if(_rc){_rc.rxId=rx.id;_rc.lockedBy="";_rc.lockTs=0;saveReceptions();}stopLockHB();_curReception=null;}else{receptions.unshift({id:"RC"+Date.now(),mode:curMode,date:todayISO(),ts:Date.now(),name:rx.name,year:rx.year,sex:rx.sex,addr:rx.addr,phone:rx.phone,reason:rx.dx,rxId:rx.id});saveReceptions();_fromRec=true;}
   idbPut(rx.id,curAtt.slice()).catch(()=>{});
   rxAll.unshift(rx);
   saveRxAll();savePatients();
   showBanner();
   toast('💾 Đã lưu TOA MỚI cho '+rx.name+(rx.follow?' · hẹn tái khám '+fmtDate(rx.follow):''));
+  if(_fromRec&&typeof showTab==='function')showTab('dispense');
 }
 
 /* ===== Danh mục thuốc ===== */
@@ -1328,7 +1332,7 @@ let _statMonth=null;
 function ymOf(iso){return (iso||'').slice(0,7);}
 function dayOf(iso){const d=new Date(iso);return isNaN(d)?0:d.getDate();}
 function effMode(r){if(r&&r.mode)return r.mode;var p=patients.find(function(x){return x.id===(r&&r.patientId);});return (p&&p.mode)||'pk';}
-function modeRx(){return rxAll.filter(function(r){return effMode(r)===curMode;});}
+function modeRx(){return rxAll.filter(function(r){return effMode(r)===curMode&&r.dispensed!==false;});}
 function firstVisitMap(){const m={};modeRx().forEach(r=>{const k=r.patientId||('n:'+(r.name||''));const d=(r.date||'');if(!m[k]||d<m[k])m[k]=d;});return m;}
 function rxMoney(r){return (r.items||[]).reduce((s,it)=>s+(Number(it.qty)||0)*(Number(it.price)||0),0);}
 function monthTotals(ym){const fv=firstVisitMap();let visits=0,neu=0,re=0,money=0;const pts=new Set();modeRx().forEach(r=>{if(ymOf(r.date)!==ym)return;visits++;money+=rxMoney(r);pts.add(r.patientId||('n:'+(r.name||'')));const k=r.patientId||('n:'+(r.name||''));if((r.date||'')===fv[k])neu++;else re++;});return {visits,neu,re,money,pts:pts.size};}
@@ -1445,7 +1449,7 @@ function refreshRowSelects(){buildDrugDatalist();document.querySelectorAll('#rxB
 
 /* ===== Bệnh nhân ===== */
 function visitInfo(pid){
-  const rxs=rxAll.filter(r=>r.patientId===pid).sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const rxs=rxAll.filter(r=>r.patientId===pid&&r.dispensed!==false).sort((a,b)=>new Date(b.date)-new Date(a.date));
   const last=rxs[0]?rxs[0].date:null;
   // ngày tái khám = follow gần nhất (đơn mới nhất có follow)
   let next="";for(const r of rxs){if(r.follow){next=r.follow;break;}}
@@ -1464,6 +1468,7 @@ function openPatients(){showTab('patients');}
 function renderPatientList(filter){
   const q=(filter||'').toLowerCase();
   const rows=patients.filter(p=>(p.mode||'pk')===curMode).map(p=>({p,info:visitInfo(p.id)}))
+    .filter(o=>o.info.count>0)
     .filter(o=>!q||o.p.name.toLowerCase().includes(q)||(o.p.phone||'').includes(q));
   // sắp theo độ ưu tiên tái khám: quá hạn/hôm nay/sắp tới trước
   rows.sort((a,b)=>{
@@ -1492,7 +1497,7 @@ function renderPatientList(filter){
   }).join(''):'<tr><td colspan="6" style="text-align:center;color:#7a8aa0;padding:18px">Chưa có bệnh nhân. Hãy kê và lưu một đơn thuốc.</td></tr>';
 
   $('ptView').innerHTML=`
-    <h3>👥 Danh sách bệnh nhân (${patients.length})</h3>
+    <h3>👥 Danh sách bệnh nhân (${rows.length})</h3>
     ${alert}
     <input class="search-in" placeholder="🔍 Tìm theo tên hoặc SĐT..." value="${esc(filter||'')}"
       oninput="renderPatientList(this.value)" autofocus>
@@ -1506,6 +1511,7 @@ function renderPatientList(filter){
   const s=$('ptView').querySelector('.search-in');if(filter!=null&&s){s.focus();s.setSelectionRange(s.value.length,s.value.length);}
 }
 
+function viewProfile(){if(!currentPatientId){toast('Chưa lưu đơn nên chưa có hồ sơ. Lưu đơn trước.');return;}showTab('patients');openPatientDetail(currentPatientId);}
 function openPatientDetail(pid){
   const p=patients.find(x=>x.id===pid);if(!p)return;
   const info=visitInfo(pid);
@@ -1555,7 +1561,7 @@ function copyRx(id){
   $('rxNote').value=rx.note||'';$('docName').value=rx.doc||'';$('rxFollow').value='';
   $('rxBody').innerHTML='';(rx.items||[]).forEach(it=>addRow(it));if(!rx.items||!rx.items.length)addRow();
   curAtt=[];renderAtt();
-  setDate();recalc();showBanner();closeModal('ptOverlay');
+  setDate();recalc();showBanner();closeModal('ptOverlay');if(typeof showRxForm==='function')showRxForm();
   toast('Đã sao chép toa ngày '+fmtDate(rx.date)+' — đây là TOA MỚI, chỉnh sửa rồi bấm Lưu đơn');
 }
 function loadRx(id){if(typeof showRxForm==="function")showRxForm();
